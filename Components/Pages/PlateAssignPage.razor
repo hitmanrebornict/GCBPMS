@@ -1,0 +1,255 @@
+﻿@page "/plate-assign"
+
+@inject GlobalFunction GF
+@inject PlateAssignService PAS
+@inject NotificationService NotificationService
+<h3>Plate Assign</h3>
+
+<RadzenCard>
+    <RadzenTemplateForm TItem="string" Data=@selectedAction Submit=@OnSubmit>
+        <RadzenFieldset Text="Selection">
+            <div class="row">
+                <div class="col-12">
+                    <RadzenLabel Text="Phase Name" />
+                    <RadzenDropDown @bind-Value="selectedPhase" Data="@phases" TextProperty="PhaseName" ValueProperty="Id" Change="@OnPhaseChange" Style="width: 100%;" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <RadzenLabel Text="Press Name" />
+                    <RadzenDropDown @bind-Value="selectedPress" Data="@presses" TextProperty="PressName" ValueProperty="Id" Change="@OnPressChange" Style="width: 100%;" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <RadzenLabel Text="Pot Name" />
+                    <RadzenDropDown @bind-Value="selectedPot" Data="@pots" TextProperty="PotName" ValueProperty="Id" Change="@OnPotChange" Style="width: 100%;" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <RadzenLabel Text="Action" />
+                    <RadzenDropDown @bind-Value="selectedAction" Data="@actions" Change="@OnActionChange" Style="width: 100%;" />
+                </div>
+            </div>
+        </RadzenFieldset>
+
+        <RadzenFieldset Text="Details">
+            @if (selectedAction == "Install")
+            {
+                <div class="row">
+                    <div class="col-12">
+                        <RadzenLabel Text="Plate Name" />
+                        <RadzenDropDown @bind-Value="selectedPlate" Data="@platesList" TextProperty="PlateName" Style="width: 100%;" />
+                    </div>
+                </div>
+            }
+            else if (selectedAction == "Switching" && selectedPlate != null)
+            {
+                <div class="row">
+                    <div class="col-12">
+                        <RadzenLabel Text="Current Plate Name" />
+                        <RadzenLabel Text="@selectedPlate.PlateName" Style="font-weight: bold;" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <RadzenLabel Text="Switch With:" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <RadzenLabel Text="Phase Name" />
+                        <RadzenDropDown @bind-Value="switchPhase" Data="@phases.Where(p => p.Id == selectedPhase)" TextProperty="PhaseName" ValueProperty="Id" Change="@OnSwitchPhaseChange" Style="width: 100%;" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <RadzenLabel Text="Press Name" />
+                        <RadzenDropDown @bind-Value="switchPress" Data="@switchPresses" TextProperty="PressName" ValueProperty="Id" Change="@OnSwitchPressChange" Style="width: 100%;" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <RadzenLabel Text="Pot Name" />
+                        <RadzenDropDown @bind-Value="switchPot" Data="@switchPots.Where(p => p.PlateId != null && p.Id != selectedPot)" TextProperty="PotName" ValueProperty="Id" Change="@OnSwitchPotChange" Style="width: 100%;" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <RadzenLabel Text="Current Plate" />
+                        @if (selectedSwitchPlate != null)
+                        {
+                            <RadzenLabel Text="@selectedSwitchPlate.PlateName" Style="font-weight: bold;" />
+                        }
+                        else
+                        {
+                            <RadzenLabel Text="No plate selected" />
+                        }
+                    </div>
+                </div>
+            }
+        </RadzenFieldset>
+
+        <div class="row" style="margin-top: 10px;">
+            <div class="col-12">
+                <RadzenButton Text="Submit" ButtonType="ButtonType.Submit" Style="width: 100%;" />
+            </div>
+        </div>
+    </RadzenTemplateForm>
+</RadzenCard>
+
+
+@code {
+    private List<Phase> phases = new List<Phase>();
+    private List<Press> presses = new List<Press>();
+    private List<Pot> pots = new List<Pot>();
+    private List<string> actions = new List<string>();
+    private List<Plate> platesList = new List<Plate>();
+
+    // Separate lists for switching functionality
+    private List<Phase> switchPhases = new List<Phase>();
+    private List<Press> switchPresses = new List<Press>();
+    private List<Pot> switchPots = new List<Pot>();
+
+    private int selectedPhase;
+    private int selectedPress;
+    private int selectedPot;
+    private string selectedAction;
+    private int switchPhase;
+    private int switchPress; 
+    private int switchPot;
+
+    private Plate selectedPlate;
+    private Plate selectedSwitchPlate;
+
+    protected override async Task OnInitializedAsync(){
+        phases = await GF.getActivePhase();
+        switchPhases = await GF.getActivePhase();
+    }
+
+    private async Task OnPhaseChange()
+    {
+        if (selectedPhase > 0)
+        {
+            presses = await GF.getPressesByPhaseID(selectedPhase);
+            selectedPress = 0;
+            pots.Clear();
+            actions.Clear();
+        }
+    }
+
+    private async Task OnPressChange() 
+    {
+        if (selectedPress > 0)
+        {
+            pots = await GF.getPotsByPressID(selectedPress);
+            selectedPot = 0;
+            actions.Clear();
+            selectedAction = null;
+        }
+    }
+
+    private async Task OnSwitchPhaseChange()
+    {
+        if (switchPhase > 0)
+        {
+            switchPresses = await GF.getPressesByPhaseID(switchPhase);
+            switchPress = 0;
+            switchPots.Clear();
+            selectedSwitchPlate = null;
+        }
+    }
+
+    private async Task OnSwitchPressChange()
+    {
+        if (switchPress > 0)
+        {
+            switchPots = await GF.getPotsByPressID(switchPress);
+            switchPot = 0;
+            selectedSwitchPlate = null;
+        }
+    }
+
+    private async Task OnSwitchPotChange()
+    {
+        if (switchPot > 0)
+        {
+            selectedSwitchPlate = await PAS.getPlateInPot(switchPot);
+        }
+        else
+        {
+            selectedSwitchPlate = null;
+        }
+    }
+
+    private void OnPotChange()
+    {
+        actions.Clear();
+        selectedPlate = null; // Reset selectedPlate when pot changes
+        selectedAction = null;
+        if (selectedPot > 0)
+        {
+            var selectedPotItem = pots.FirstOrDefault(p => p.Id == selectedPot);
+            if (selectedPotItem != null)
+            {
+                if (selectedPotItem.PlateId == null)
+                {
+                    actions.Add("Install");
+                }
+                else
+                {
+                    actions.Add("Switching");
+                }
+            }
+        }
+    }
+
+    private async Task OnActionChange()
+    {
+        if(selectedAction == "Install")
+        {
+            platesList = await GF.getPlatesInInventory();
+        }
+        else if(selectedAction == "Switching")
+        {
+            selectedPlate = await GF.getPlateInPot(selectedPot);
+            Debug.WriteLine("selectedPot: " + selectedPot);
+        }
+    }
+
+    private async Task OnSubmit()
+    {
+        if(selectedAction == "Install")
+        {
+            try
+            {
+                await PAS.assignPlateToPot(selectedPot, selectedPlate.Id);
+                NotificationService.Notify(NotificationSeverity.Success, "Success", "Plate assigned successfully!");
+            }
+            catch (Exception ex)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to assign plate: {ex.Message}");
+            }
+        }
+        else if(selectedAction == "Switching")
+        {
+            try
+            {
+                if(selectedSwitchPlate == null)
+                {
+                    NotificationService.Notify(NotificationSeverity.Error, "Error", "Second pot must have a plate to switch");
+                    return;
+                }
+
+                // Switch the plates between pots
+                await PAS.switchPlateBetweenPots(selectedPot, switchPot);
+                NotificationService.Notify(NotificationSeverity.Success, "Success", "Plates switched successfully!");
+            }
+            catch (Exception ex)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to switch plates: {ex.Message}");
+            }
+        }
+    }
+}

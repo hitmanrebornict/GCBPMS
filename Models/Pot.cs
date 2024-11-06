@@ -15,7 +15,11 @@ public partial class Pot
 
     public int? PressId { get; set; }
 
+    public DateTime? InstallDatetime { get; set; }
+
     public virtual Plate? Plate { get; set; }
+
+    public virtual ICollection<PlateHistoryUsage> PlateHistoryUsages { get; set; } = new List<PlateHistoryUsage>();
 
     public virtual Press? Press { get; set; }
 }

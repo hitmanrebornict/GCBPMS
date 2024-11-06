@@ -1,0 +1,171 @@
+﻿
+@inject MasterDataPageServices MDPS
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+
+
+<RadzenTemplateForm Data="@model" TItem="FormModel" Submit=@OnSubmit>
+    <div class="row" style="margin-bottom: 16px">
+        @switch (DataType)
+        {
+            case MasterDataType.Phase:
+                <div class="col-md-12">
+                    <RadzenLabel Text="Phase Name" />
+                    <RadzenTextBox @bind-Value="@model.PhaseName" style="width: 100%;" Name="PhaseName"/>
+                    <RadzenRequiredValidator Component="PhaseName" Text="Phase name is required" />
+                    <RadzenLabel Text="Pot Number" />
+                    <RadzenNumeric @bind-Value="@model.PotNumber" style="width: 100%;" Name="PotNumber"/>
+                    <RadzenRequiredValidator Component="PotNumber" Text="Pot number is required" />
+                </div>
+                break;
+
+            case MasterDataType.Brand:
+                <div class="col-md-12">
+                    <RadzenLabel Text="Brand Name" />
+                    <RadzenTextBox @bind-Value="@model.BrandName" style="width: 100%;" Name="BrandName"/>
+                    <RadzenRequiredValidator Component="BrandName" Text="Brand name is required" />
+                </div>
+                break;
+
+            case MasterDataType.Plate:
+                <div class="col-md-12">
+                    <RadzenLabel Text="Plate Name" />
+                    <RadzenTextBox @bind-Value="@model.PlateName" style="width: 100%;" Name="PlateName"/>
+                    <RadzenRequiredValidator Component="PlateName" Text="Plate name is required" />
+                    <RadzenLabel Text="Brand" />
+                    <RadzenDropDown Data="@Brands" TextProperty="BrandName" ValueProperty="Id" 
+                                  @bind-Value="@model.SelectedBrandId" style="width: 100%;" Name="SelectedBrand" />
+                    <RadzenRequiredValidator Component="SelectedBrand" Text="Brand is required" />
+                    <RadzenLabel Text="Phase Type" />
+                    <RadzenDropDown Data="@Phases" TextProperty="PhaseName" ValueProperty="Id" 
+                                  @bind-Value="@model.SelectedPhaseId" style="width: 100%;" Name="SelectedPhase" />
+                    <RadzenRequiredValidator Component="SelectedPhase" Text="Phase is required" />
+                    <RadzenLabel Text="Install Date" />
+                    <RadzenDatePicker @bind-Value="@model.InstallDate" style="width: 100%;" Name="InstallDate" />
+                    <RadzenRequiredValidator Component="InstallDate" Text="Install date is required" />
+                </div>
+                break;
+
+            case MasterDataType.Pot:
+                <div class="col-md-12">
+                    <RadzenLabel Text="Pot Name" />
+                    <RadzenTextBox @bind-Value="@model.PotName" style="width: 100%;" Name="PotName"/>
+                    <RadzenRequiredValidator Component="PotName" Text="Pot name is required" />
+                    <RadzenLabel Text="Press" />
+                    <RadzenDropDown Data="@Presses" TextProperty="PressName" ValueProperty="Id" 
+                                  @bind-Value="@model.SelectedPressId" style="width: 100%;" Name="SelectedPress" />
+                    <RadzenRequiredValidator Component="SelectedPress" Text="Press is required" />
+                    <RadzenLabel Text="Plate" />
+                    <RadzenDropDown Data="@Plates" TextProperty="PlateName" ValueProperty="Id" 
+                                  @bind-Value="@model.SelectedPlateId" style="width: 100%;" Name="SelectedPlate" />
+                    <RadzenRequiredValidator Component="SelectedPlate" Text="Plate is required" />
+                </div>
+                break;
+
+            case MasterDataType.Press:
+                <div class="col-md-12">
+                    <RadzenLabel Text="Press Name" />
+                    <RadzenTextBox @bind-Value="@model.PressName" style="width: 100%;" Name="PressName"/>
+                    <RadzenRequiredValidator Component="PressName" Text="Press name is required" />
+                    <RadzenLabel Text="Phase" />
+                    <RadzenDropDown Data="@Phases" TextProperty="PhaseName" ValueProperty="Id" 
+                                  @bind-Value="@model.SelectedPhaseId" style="width: 100%;" Name="SelectedPhase" />
+                    <RadzenRequiredValidator Component="SelectedPhase" Text="Phase is required" />
+                </div>
+                break;
+        }
+    </div>
+    <div class="row justify-content-center">
+        <div class="col-md-12 d-flex align-items-end justify-content-center" style="margin-top: 16px;">
+            <RadzenButton ButtonType="ButtonType.Submit" Text="Save" ButtonStyle="ButtonStyle.Primary" />
+            <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click=@Cancel class="mx-2" />
+        </div>
+    </div>
+</RadzenTemplateForm>
+
+@code {
+    private FormModel model = new();
+
+    private class FormModel
+    {
+        public string PhaseName { get; set; }
+        public int PotNumber { get; set; }
+        public string BrandName { get; set; }
+        public string PlateName { get; set; }
+        public int SelectedBrandId { get; set; }
+        public int SelectedPhaseId { get; set; }
+        public DateTime InstallDate { get; set; } = DateTime.Now;
+        public string PotName { get; set; }
+        public int SelectedPressId { get; set; }
+        public int SelectedPlateId { get; set; }
+        public string PressName { get; set; }
+    }
+
+    public enum MasterDataType
+    {
+        Phase,
+        Brand, 
+        Plate,
+        Pot,
+        Press
+    }
+
+    [Parameter]
+    public MasterDataType DataType { get; set; }
+
+    [Parameter] 
+    public List<Brand> Brands { get; set; }
+
+    [Parameter]
+    public List<Phase> Phases { get; set; }
+
+    [Parameter]
+    public List<Plate> Plates { get; set; }
+
+    [Parameter]
+    public List<Press> Presses { get; set; }
+
+    private async Task OnSubmit()
+    {
+        try
+        {
+            switch (DataType)
+            {
+                case MasterDataType.Phase:
+                    await MDPS.CreatePhaseAsync(model.PhaseName, model.PotNumber);
+                    break;
+
+                case MasterDataType.Brand:
+                    await MDPS.CreateBrandAsync(model.BrandName);
+                    break;
+
+                case MasterDataType.Plate:
+                    await MDPS.CreatePlateAsync(model.PlateName, model.SelectedBrandId, model.SelectedPhaseId, model.InstallDate);
+                    break;
+
+                case MasterDataType.Pot:
+                    await MDPS.CreatePotAsync(model.PotName, model.SelectedPressId, model.SelectedPlateId);
+                    break;
+
+                case MasterDataType.Press:
+                    Debug.WriteLine("This is the phase id");
+                    Debug.WriteLine(model.SelectedPhaseId);
+                    await MDPS.CreatePressAsync(model.PressName, model.SelectedPhaseId);
+                    break;
+            }
+
+            NotificationService.Notify(NotificationSeverity.Success, "Success", $"{DataType} created successfully");
+            DialogService.Close(true);
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Error creating {DataType}: {ex.Message}");
+        }
+    }
+
+    private void Cancel()
+    {
+        DialogService.Close();
+    }
+
+}

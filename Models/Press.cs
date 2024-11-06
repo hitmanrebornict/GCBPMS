@@ -15,7 +15,5 @@ public partial class Press
 
     public virtual Phase? Phase { get; set; }
 
-    public virtual ICollection<PlateHistoryUsage> PlateHistoryUsages { get; set; } = new List<PlateHistoryUsage>();
-
     public virtual ICollection<Pot> Pots { get; set; } = new List<Pot>();
 }

@@ -9,7 +9,15 @@
 
     <main style ="background-color:#f4f5f9;">
         <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+            @* <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a> *@
+            <RadzenProfileMenu>
+                <Template>
+                    <RadzenGravatar></RadzenGravatar>
+                </Template>
+                <ChildContent>
+                    <RadzenProfileMenuItem Text="Buttons" Path="buttons" Icon="account_circle"></RadzenProfileMenuItem>
+                 </ChildContent>
+            </RadzenProfileMenu>
         </div>
 
         <article class="content px-4">

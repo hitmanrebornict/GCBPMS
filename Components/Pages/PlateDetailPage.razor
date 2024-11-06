@@ -1,0 +1,78 @@
+﻿@page "/plate-detail/{id:int}"
+
+<h3>PlateDetailPage</h3>
+
+@inject PlateDetailPageServices PDPS
+
+<RadzenCard>
+    <div class="plate-details">
+        <RadzenLabel Text=@($"Plate Name: {plate.PlateName}") Style="font-weight: bold; display: block;" />
+        <RadzenLabel Text=@($"Brand Name: {plate.PlateBrandNavigation?.BrandName ?? "N/A"}") Style="font-weight: bold; display: block;" />
+        <RadzenLabel Text=@($"Install Date: {plate.PlateInstallDatetime.ToString("dd/MM/yyyy") ?? "N/A"}") Style="font-weight: bold; display: block;" />
+        <RadzenLabel Text=@($"Days Since Installation: {daysUsed} days") Style="font-weight: bold; display: block;" />
+        @if (plate.PlateStatus == "Used")
+        {
+            <RadzenLabel Text=@($"Phase Name: {plate.Pots.FirstOrDefault()?.Press?.Phase?.PhaseName ?? "N/A"}") Style="font-weight: bold; display: block;" />
+            <RadzenLabel Text=@($"Press Name: {plate.Pots.FirstOrDefault()?.Press?.PressName ?? "N/A"}") Style="font-weight: bold; display: block;" />
+            <RadzenLabel Text=@($"Pot Name: {plate.Pots.FirstOrDefault()?.PotName ?? "N/A"}") Style="font-weight: bold; display: block;" />
+            <RadzenLabel Text=@($"Install Date: {plate.Pots.FirstOrDefault()?.InstallDatetime}") Style="font-weight: bold; display: block;" />
+            <RadzenLabel Text=@($"Time Used: {timeUsed} days") Style="font-weight: bold; display: block;" />
+        }
+        else
+        {
+            <RadzenLabel Text=@($"Status: {plate.PlateStatus}") Style="font-weight: bold; display: block;" />
+        }
+    </div>
+</RadzenCard>
+
+<RadzenCard>
+
+    <RadzenDataGrid TItem="PlateHistoryUsage" Data=@plateHistoryUsages AllowFiltering="true" AllowSorting="true" FilterMode="FilterMode.Simple">
+        <Columns>
+            <RadzenDataGridColumn TItem="PlateHistoryUsage" Property="InstallDateTime" Title="Install Date" />
+            <RadzenDataGridColumn TItem="PlateHistoryUsage" Property="RemoveDateTime" Title="Remove Date" />
+            <RadzenDataGridColumn TItem="PlateHistoryUsage" Title="Days Since Installation">
+                <Template Context="data">
+                    @CalculateDaysBetween(data.InstallDateTime, data.RemoveDateTime)
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="PlateHistoryUsage" Title="Press Name" Property="Pots.Press.PressName" >
+                <Template Context="data">
+                    @data.Pot.Press.PressName
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="PlateHistoryUsage" Title="Pot Name" Property="Pots.PotName" >
+                <Template Context="data">
+                    @data.Pot.PotName
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+</RadzenCard>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }     
+
+    private Plate plate = new Plate();
+    private List<PlateHistoryUsage> plateHistoryUsages = new List<PlateHistoryUsage>();
+    private int timeUsed;
+    private int daysUsed;
+
+    protected override async Task OnInitializedAsync()
+    {
+        plate = await PDPS.getPlateDetail(Id);
+        plateHistoryUsages = await PDPS.getPlateHistoryUsage(Id);
+        if(plate.PlateStatus == "Used"  )
+        {
+            timeUsed = await PDPS.getTimeUsedForPlate(plate);
+        }
+        daysUsed = CalculateDaysBetween(plate.PlateInstallDatetime, DateTime.Now);
+    }   
+
+    private int CalculateDaysBetween(DateTime installDate, DateTime? removeDate)
+    {
+        var endDate = removeDate ?? DateTime.Now;
+        return (endDate - installDate).Days;
+    }
+}

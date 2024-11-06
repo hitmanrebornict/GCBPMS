@@ -1,0 +1,67 @@
+﻿@page "/press-detail-page"
+
+<h3>Press DetailPage</h3>
+
+@inject GlobalFunction globalFunction
+@inject PressDetailPageServices PDPS
+
+<RadzenCard>
+    <RadzenDropDown Data="@phases" TextProperty="PhaseName" @bind-Value="selectedPhase" Change="@loadPressDataByPhaseID" />
+    <RadzenDropDown Data="@presses" TextProperty="PressName" ValueProperty="Id" @bind-Value="pressID" Change="@loadPotsDataByPressID" />
+
+    @if (pots is null || pots.Count == 0)
+    {
+        <RadzenButton Text="Create New Pot" Click="() => createPots(selectedPhase)" />
+    }
+
+    @if (pressID > 0)
+    {
+        <RadzenDataGrid ref="@potsGrid" Data="@pots" AllowFiltering="true" AllowSorting="true">
+            <Columns>
+
+                <RadzenDataGridColumn Property="PotName" Title="Pot Name" />
+                <RadzenDataGridColumn Property="Plate.PlateName" Title="Plate Name">
+                    <Template>
+                        @(context.Plate?.PlateName ?? "Empty")
+                    </Template>
+                </RadzenDataGridColumn>
+
+            </Columns>
+        </RadzenDataGrid>
+    }
+</RadzenCard>
+
+
+
+@code {
+    private List<Press> presses = new List<Press>();
+    private List<Phase> phases = new List<Phase>();
+    private List<Pot> pots = new List<Pot>();
+    private Phase selectedPhase;
+    private int pressID = 0;
+    private RadzenDataGrid<Pot> potsGrid = new RadzenDataGrid<Pot>();
+    protected override async Task OnInitializedAsync()
+    {
+        phases = await globalFunction.getActivePhase();
+    }
+
+    private async Task loadPotsDataByPressID()
+    {
+        if (pressID > 0)
+        {
+            pots = await PDPS.getPotsByPressID(pressID);
+        }
+    }
+
+    private async Task loadPressDataByPhaseID()
+    {
+        presses = await PDPS.getPressesByPhaseID(selectedPhase.Id);
+        pressID = 0;
+        pots.Clear();
+       
+    }
+
+    private async Task createPots(Phase selectedPhase){
+        await PDPS.CreatePotsAsync(selectedPhase, pressID);
+    }
+}

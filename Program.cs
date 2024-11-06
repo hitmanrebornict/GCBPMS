@@ -3,6 +3,8 @@ using GCBPMS.Components.Services;
 using GCBPMS.Models;
 using Microsoft.EntityFrameworkCore;
 using Radzen;
+using GCBPMS.Areas.Identity.Data;
+using Microsoft.AspNetCore.Identity;
 
 namespace GCBPMS
 {
@@ -15,6 +17,11 @@ namespace GCBPMS
 			builder.Services.AddDbContext<PmsContext>(options =>
 				   options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+            builder.Services.AddDbContext<GCBPMSIdentityDbContext>(options =>
+                   options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+            builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true).AddEntityFrameworkStores<GCBPMSIdentityDbContext>();
+
 			// Add services to the container.
 			builder.Services.AddRazorComponents()
 				.AddInteractiveServerComponents();
@@ -22,6 +29,13 @@ namespace GCBPMS
 			builder.Services.AddTransient<PmsContext>();
 			builder.Services.AddScoped<GlobalFunction>();
             builder.Services.AddRadzenComponents();
+			builder.Services.AddScoped<MasterDataPageServices>();
+			builder.Services.AddScoped<PressDetailPageServices>();
+			builder.Services.AddScoped<PlateAssignService>();
+            builder.Services.AddScoped<PlateDetailPageServices>();
+            builder.Services.AddScoped<ProdCreateRequestPageServices>();
+            builder.Services.AddScoped<MaintenanceRequestServices>();
+			builder.Services.AddScoped<NotificationService>();
 
             var app = builder.Build();
 
@@ -40,6 +54,8 @@ namespace GCBPMS
 
 			app.MapRazorComponents<App>()
 				.AddInteractiveServerRenderMode();
+
+			app.MapRazorPages();
 
 			app.Run();
 		}

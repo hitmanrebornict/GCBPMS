@@ -1,0 +1,30 @@
+@page "/press-list"
+
+@inject GlobalFunction GF
+@inject PlateAssignService PAS
+
+<h3>Plate Assign</h3>
+
+<RadzenDataGrid TItem="Press" Data="@presses" AllowFiltering="true" AllowSorting="true" SelectionMode="DataGridSelectionMode.Single" CellDoubleClick="onCellDoubleClick">
+    <Columns>
+        <RadzenDataGridColumn Property="Phase.PhaseName" Title="Phase Name" />
+        <RadzenDataGridColumn Property="PressName" Title="Press Name" />
+    </Columns>
+</RadzenDataGrid>
+
+@code {
+    private List<Press> presses = new List<Press>();
+
+    [Inject]
+    private NavigationManager NavigationManager { get; set; }
+
+    protected override async Task OnInitializedAsync(){
+        presses = await PAS.getActivePressesJoinPhase();
+    }
+
+   
+    void onCellDoubleClick(DataGridCellMouseEventArgs<Press> args)
+    {
+        NavigationManager.NavigateTo($"/plate-assign/{args.Data.Id}");
+    }
+}

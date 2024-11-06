@@ -1,0 +1,210 @@
+﻿@page "/prod-create-request"
+
+@inject GlobalFunction GF
+@inject NotificationService NotificationService
+@inject ProdCreateRequestPageServices PCPPS
+
+<h3>Create Request</h3>
+
+<div class="row mb-3">
+    <div class="col">
+        <RadzenCard>
+            <div class="d-flex justify-content-left">
+                <RadzenSelectBar @bind-Value=@selectedOption TValue="int" class="mb-3">
+                    <Items>
+                        <RadzenSelectBarItem Text="Machine" Value="1"  />
+                        <RadzenSelectBarItem Text="Inventory" Value="2" />
+                    </Items>
+                </RadzenSelectBar>
+            </div>
+
+            @switch (selectedOption)
+            {
+                case 1:
+                    <div class="machine-content">
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <RadzenLabel Text="Phase Name" />
+                                <RadzenDropDown @bind-Value="selectedPhase" 
+                                              Data="@phases" 
+                                              TextProperty="PhaseName" 
+                                              ValueProperty="Id" 
+                                              Change="@OnPhaseChange" 
+                                              Style="width: 100%;" />
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <RadzenLabel Text="Press Name" />
+                                <RadzenDropDown @bind-Value="selectedPress" 
+                                              Data="@presses" 
+                                              TextProperty="PressName" 
+                                              ValueProperty="Id" 
+                                              Change="@OnPressChange" 
+                                              Style="width: 100%;" />
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <RadzenLabel Text="Pot Name" />
+                                <RadzenDropDown @bind-Value="selectedPot" 
+                                              Data="@activePots.Where(p => p.PlateId != null)" 
+                                              TextProperty="PotName" 
+                                              ValueProperty="Id" 
+                                              Change="@OnPotChange" 
+                                              Style="width: 100%;" />
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <RadzenLabel Text="Plate Name :" />
+                                    <b><RadzenLabel Text=@(selectedPlate.PlateName ?? "") /></b>
+                            </div>
+                        </div>
+                    </div>
+                    break;
+
+                case 2:
+                    <div class="inventory-content">
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <RadzenLabel Text="Plate Name" />
+                                <RadzenDropDown Data=@activePlates 
+                                              TextProperty="PlateName"
+                                              FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                              AllowFiltering="true"
+                                              Placeholder="Select Plate..."
+                                              Style="width: 100%;"
+                                              @bind-Value=@selectedPlate 
+                                              />
+                            </div>
+                        </div>
+                    </div>
+                    break;
+            }
+            <div class="row mb-3">
+                <div class="col-12">
+                    <RadzenLabel Text="Repair reason" />
+                    <RadzenDropDown Data=@repairTypes  @bind-Value="selectedRepairType" Style="width: 100%;"/>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-12">
+                    <RadzenLabel Text="Remark" />
+                    <RadzenTextBox @bind-Value="repairRemark" Style="width: 100%;"></RadzenTextBox>
+                </div>
+            </div>
+            <RadzenButton Icon="save" Text="Submit" Click="@OnSubmit" />
+        </RadzenCard>
+    </div>
+</div>
+
+
+@code {
+    public int selectedOption = 1;
+    public int selectedPlateId { get; set; }
+    public List<Plate> activePlates { get; set; } = new List<Plate>();  
+
+    private int? selectedPhase { get; set; }
+    private int? selectedPress { get; set; }
+    private int? selectedPot { get; set; }
+
+    private Request selectedRequest = new Request();
+    private Plate selectedPlate = new Plate(); 
+    private string repairRemark { get; set; }
+
+    private List<string> repairTypes = new List<string> { "Plate Baling", "Plate Crack", "Plate Ullir Rusak", "Plate Kuping Patah", "Others" };
+    private string selectedRepairType { get; set; }
+
+    private List<Phase> phases { get; set; } = new List<Phase>();
+    private List<Press> presses { get; set; } = new List<Press>();
+    private List<Pot> activePots { get; set; } = new List<Pot>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        activePlates = (await GF.getActivePlate()).Where(p => p.PlateStatus == "Inventory").ToList();
+        phases = await GF.getActivePhase();
+    }
+
+    private async Task OnPhaseChange(object value)
+    {
+        if (selectedPhase.HasValue)
+        {
+            presses = await GF.getPressesByPhaseID(selectedPhase.Value);
+            selectedPress = null;
+            selectedPot = null;
+        }
+    }
+
+    private async Task OnPressChange(object value)
+    {
+        if (selectedPress.HasValue)
+        {
+            // Get only pots that have plates assigned
+            activePots = await GF.getPotsByPressID(selectedPress.Value);
+            selectedPot = null;
+        }
+    }
+
+    private async Task OnPotChange(object value)
+    {
+       selectedPlate = await GF.getPlateInPot(selectedPot.Value);
+    }
+
+    private async Task OnSubmit()
+    {
+        try
+        {
+
+            if (string.IsNullOrEmpty(selectedRepairType))
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "Please select a repair type");
+            return;
+        }
+
+            if (selectedOption == 1)
+            {
+            if (!selectedPhase.HasValue)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "Please select a phase");
+                return;
+            }
+
+            if (!selectedPress.HasValue)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "Please select a press");
+                return;
+            }
+
+            if (!selectedPot.HasValue)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "Please select a pot");
+                return;
+            }
+
+            await PCPPS.createMachineRequest(selectedPot.Value, selectedRepairType, repairRemark, selectedPlate);
+            NotificationService.Notify(NotificationSeverity.Success, "Success", "Repair request created successfully!");
+        }
+        else
+        {
+            if (selectedPlate == null || selectedPlate.Id == 0)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "Please select a plate");
+                return;
+            }
+
+            await PCPPS.createInventoryRepairRequest(selectedRepairType, repairRemark, selectedPlate);
+            NotificationService.Notify(NotificationSeverity.Success, "Success", "Repair request created successfully!");
+        }
+
+        
+
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", ex.Message);
+        }
+    }
+}

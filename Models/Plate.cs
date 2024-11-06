@@ -27,5 +27,5 @@ public partial class Plate
 
     public virtual ICollection<Pot> Pots { get; set; } = new List<Pot>();
 
-    public virtual ICollection<Repair> Repairs { get; set; } = new List<Repair>();
+    public virtual ICollection<Request> Requests { get; set; } = new List<Request>();
 }

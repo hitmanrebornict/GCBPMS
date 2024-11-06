@@ -1,0 +1,105 @@
+﻿@page "/request-detail/{id:int}"
+
+@inject MaintenanceRequestServices MRS;
+@inject NavigationManager NavigationManager;
+@inject IJSRuntime JS;
+
+<RadzenCard>
+   
+        <h2>Request Detail</h2>
+        <div>
+            <RadzenLabel Text="Plate Name:" />
+            <RadzenText Text=@(plateName) />
+        </div>
+        <div>
+            <RadzenLabel Text="Request Date:" />
+            <RadzenText Text=@request.RequestDatetime.ToString("dd/MM/yyyy") />
+        </div>
+        <div>
+            <RadzenLabel Text="Repair Reason:" />
+            <RadzenText Text=@request.RepairReason />
+        </div>
+        <div>
+            <RadzenLabel Text="Repair Remark:" />
+            <RadzenText Text=@(request.RepairRemark ?? "N/A") />
+        </div>
+        <hr />
+
+        <h3>Maintenance Part</h3>
+        <RadzenLabel Text="Repair Type" />
+        <RadzenDropDown TValue="string" @bind-Value="selectedRepair.RepairType" Data=@repairTypes  />
+
+        @if (!string.IsNullOrEmpty(selectedRepair?.RepairType) && selectedRepair.RepairType == "Supplier")
+        {
+            <RadzenTemplateForm TItem="SupplierDetail" Data=@selectedSupplier Submit="@(async () => await onSupplierSubmit())">
+            <RadzenLabel Text="Supplier" />
+            <RadzenTextBox Name="SupplierName" @bind-Value="selectedSupplier.SupplierName" />
+            <RadzenRequiredValidator Component="SupplierName" Text="Supplier Name is required" />
+
+            <RadzenLabel Text="ETA" />
+            <RadzenDatePicker Name="Eta" @bind-Value="selectedSupplier.Eta" />
+            <RadzenRequiredValidator Component="Eta" Text="ETA is required" />
+
+            <RadzenButton Text="Submit" ButtonType="ButtonType.Submit" />
+            </RadzenTemplateForm>
+        }
+        else
+        {
+            <RadzenTemplateForm TItem="Repair" Data=@selectedRepair Submit="@(async () => await onTechnicianSubmit())">
+            <RadzenLabel Text="Technician Name" />
+            <RadzenTextBox Name="TechnicianName" @bind-Value="selectedRepair.TechnicianName" />
+            <RadzenRequiredValidator Component="TechnicianName" Text="Technician Name is required" />
+            <RadzenButton Text="Submit" ButtonType="ButtonType.Submit" />
+            </RadzenTemplateForm>
+        }
+   
+</RadzenCard>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Request request = new Request();
+    private Repair selectedRepair = new();
+    private SupplierDetail selectedSupplier = new();
+    private string plateName;
+
+    private List<string> repairTypes = new List<string> {"In-house", "Supplier"};
+
+    protected override async Task OnInitializedAsync(){
+        try{    
+            request = await MRS.getRequestById(Id);
+
+            if(request == null){
+                NavigationManager.NavigateTo("/maintenance-request-list");
+                return;
+            }
+
+            selectedRepair = new Repair { RepairType = "In-house" };
+            plateName = request.Plate.PlateName;
+        }
+        catch (Exception ex){
+            NavigationManager.NavigateTo("/maintenance-request-list");
+        }   
+    }
+
+    private async Task onSupplierSubmit(){
+        try{
+            await MRS.insertIntoSupplierRepair(selectedSupplier, request);
+            NotificationServices.Notify(NotificationSeverity.Success, "Repair Request Accepted");
+        }
+        catch (Exception ex){
+            NotificationServices.Notify(NotificationSeverity.Error, ex.Message);
+        }
+    }
+
+    private async Task onTechnicianSubmit(){
+        try{
+            await MRS.insertIntoTechnicianRepair(selectedRepair, request);
+            NotificationServices.Notify(NotificationSeverity.Success, "Repair Request Accepted");
+        }
+        catch (Exception ex){
+            NotificationServices.Notify(NotificationSeverity.Error, ex.Message);
+        }
+    }
+}

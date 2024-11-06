@@ -1,0 +1,30 @@
+﻿@page "/maintenance-request-list"
+
+<h3>RequestListPage</h3>
+
+@inject MaintenanceRequestServices MRLPS;
+@inject NavigationManager NavigationManager;
+
+<RadzenCard>
+ <RadzenDataGrid TItem="Request" Data=@requests AllowFiltering=true FilterMode="FilterMode.CheckBoxList" AllowSorting=true RowDoubleClick="OnRowDoubleClick">
+    <Columns>
+        <RadzenDataGridColumn TItem="Request" Property="Plate.PlateName" Title="Plate Name" />
+        <RadzenDataGridColumn TItem="Request" Property="RequestDatetime" Title="Request Date" />
+        <RadzenDataGridColumn TItem="Request" Property="RequestStatus" Title="Request Remark" />
+    </Columns>
+ </RadzenDataGrid>
+</RadzenCard>
+
+@code {
+    private List<Request> requests = new List<Request>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        requests = await MRLPS.getRequests();
+    }
+
+    void OnRowDoubleClick(DataGridRowMouseEventArgs<Request> args)
+    {
+        NavigationManager.NavigateTo($"request-detail/{args.Data.Id}");
+    }
+}

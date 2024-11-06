@@ -15,6 +15,18 @@ public partial class PmsContext : DbContext
     {
     }
 
+    public virtual DbSet<AspNetRole> AspNetRoles { get; set; }
+
+    public virtual DbSet<AspNetRoleClaim> AspNetRoleClaims { get; set; }
+
+    public virtual DbSet<AspNetUser> AspNetUsers { get; set; }
+
+    public virtual DbSet<AspNetUserClaim> AspNetUserClaims { get; set; }
+
+    public virtual DbSet<AspNetUserLogin> AspNetUserLogins { get; set; }
+
+    public virtual DbSet<AspNetUserToken> AspNetUserTokens { get; set; }
+
     public virtual DbSet<Brand> Brands { get; set; }
 
     public virtual DbSet<Phase> Phases { get; set; }
@@ -31,10 +43,84 @@ public partial class PmsContext : DbContext
 
     public virtual DbSet<RepairCost> RepairCosts { get; set; }
 
+    public virtual DbSet<Request> Requests { get; set; }
+
     public virtual DbSet<SupplierDetail> SupplierDetails { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<AspNetRole>(entity =>
+        {
+            entity.HasIndex(e => e.NormalizedName, "RoleNameIndex")
+                .IsUnique()
+                .HasFilter("([NormalizedName] IS NOT NULL)");
+
+            entity.Property(e => e.Name).HasMaxLength(256);
+            entity.Property(e => e.NormalizedName).HasMaxLength(256);
+        });
+
+        modelBuilder.Entity<AspNetRoleClaim>(entity =>
+        {
+            entity.HasIndex(e => e.RoleId, "IX_AspNetRoleClaims_RoleId");
+
+            entity.HasOne(d => d.Role).WithMany(p => p.AspNetRoleClaims).HasForeignKey(d => d.RoleId);
+        });
+
+        modelBuilder.Entity<AspNetUser>(entity =>
+        {
+            entity.HasIndex(e => e.NormalizedEmail, "EmailIndex");
+
+            entity.HasIndex(e => e.NormalizedUserName, "UserNameIndex")
+                .IsUnique()
+                .HasFilter("([NormalizedUserName] IS NOT NULL)");
+
+            entity.Property(e => e.Email).HasMaxLength(256);
+            entity.Property(e => e.NormalizedEmail).HasMaxLength(256);
+            entity.Property(e => e.NormalizedUserName).HasMaxLength(256);
+            entity.Property(e => e.UserName).HasMaxLength(256);
+
+            entity.HasMany(d => d.Roles).WithMany(p => p.Users)
+                .UsingEntity<Dictionary<string, object>>(
+                    "AspNetUserRole",
+                    r => r.HasOne<AspNetRole>().WithMany().HasForeignKey("RoleId"),
+                    l => l.HasOne<AspNetUser>().WithMany().HasForeignKey("UserId"),
+                    j =>
+                    {
+                        j.HasKey("UserId", "RoleId");
+                        j.ToTable("AspNetUserRoles");
+                        j.HasIndex(new[] { "RoleId" }, "IX_AspNetUserRoles_RoleId");
+                    });
+        });
+
+        modelBuilder.Entity<AspNetUserClaim>(entity =>
+        {
+            entity.HasIndex(e => e.UserId, "IX_AspNetUserClaims_UserId");
+
+            entity.HasOne(d => d.User).WithMany(p => p.AspNetUserClaims).HasForeignKey(d => d.UserId);
+        });
+
+        modelBuilder.Entity<AspNetUserLogin>(entity =>
+        {
+            entity.HasKey(e => new { e.LoginProvider, e.ProviderKey });
+
+            entity.HasIndex(e => e.UserId, "IX_AspNetUserLogins_UserId");
+
+            entity.Property(e => e.LoginProvider).HasMaxLength(128);
+            entity.Property(e => e.ProviderKey).HasMaxLength(128);
+
+            entity.HasOne(d => d.User).WithMany(p => p.AspNetUserLogins).HasForeignKey(d => d.UserId);
+        });
+
+        modelBuilder.Entity<AspNetUserToken>(entity =>
+        {
+            entity.HasKey(e => new { e.UserId, e.LoginProvider, e.Name });
+
+            entity.Property(e => e.LoginProvider).HasMaxLength(128);
+            entity.Property(e => e.Name).HasMaxLength(128);
+
+            entity.HasOne(d => d.User).WithMany(p => p.AspNetUserTokens).HasForeignKey(d => d.UserId);
+        });
+
         modelBuilder.Entity<Brand>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__Brands__3214EC078F50502C");
@@ -79,15 +165,16 @@ public partial class PmsContext : DbContext
                 .HasForeignKey(d => d.PlateId)
                 .HasConstraintName("FK__PlateHist__Plate__45F365D3");
 
-            entity.HasOne(d => d.Press).WithMany(p => p.PlateHistoryUsages)
-                .HasForeignKey(d => d.PressId)
-                .HasConstraintName("FK__PlateHist__Press__46E78A0C");
+            entity.HasOne(d => d.Pot).WithMany(p => p.PlateHistoryUsages)
+                .HasForeignKey(d => d.PotId)
+                .HasConstraintName("FK_PlateHistoryUsagePots");
         });
 
         modelBuilder.Entity<Pot>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__Pots__3214EC07D7C1E33D");
 
+            entity.Property(e => e.InstallDatetime).HasColumnType("datetime");
             entity.Property(e => e.PotName).HasMaxLength(100);
 
             entity.HasOne(d => d.Plate).WithMany(p => p.Pots)
@@ -115,14 +202,16 @@ public partial class PmsContext : DbContext
             entity.HasKey(e => e.Id).HasName("PK__Repairs__3214EC07B34002B8");
 
             entity.Property(e => e.FinishDatetime).HasColumnType("datetime");
+            entity.Property(e => e.RepairRemark).HasMaxLength(255);
             entity.Property(e => e.RepairStatus).HasMaxLength(50);
             entity.Property(e => e.RepairType).HasMaxLength(20);
-            entity.Property(e => e.RequestDatetime).HasColumnType("datetime");
+            entity.Property(e => e.StartDatetime).HasColumnType("datetime");
             entity.Property(e => e.TechnicianName).HasMaxLength(100);
 
-            entity.HasOne(d => d.Plate).WithMany(p => p.Repairs)
-                .HasForeignKey(d => d.PlateId)
-                .HasConstraintName("FK__Repairs__PlateId__4BAC3F29");
+            entity.HasOne(d => d.Request).WithMany(p => p.Repairs)
+                .HasForeignKey(d => d.RequestId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Repairs_Requests");
 
             entity.HasOne(d => d.SupplierDetails).WithMany(p => p.Repairs)
                 .HasForeignKey(d => d.SupplierDetailsId)
@@ -140,6 +229,28 @@ public partial class PmsContext : DbContext
             entity.HasOne(d => d.Repair).WithMany(p => p.RepairCosts)
                 .HasForeignKey(d => d.RepairId)
                 .HasConstraintName("FK__RepairCos__Repai__59FA5E80");
+        });
+
+        modelBuilder.Entity<Request>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__Requests__3214EC07001E1CAE");
+
+            entity.Property(e => e.RepairReason)
+                .HasMaxLength(255)
+                .IsUnicode(false);
+            entity.Property(e => e.RepairRemark)
+                .HasMaxLength(255)
+                .IsUnicode(false);
+            entity.Property(e => e.RequestDatetime).HasColumnType("datetime");
+            entity.Property(e => e.RequestStatus)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasDefaultValue("Requested");
+
+            entity.HasOne(d => d.Plate).WithMany(p => p.Requests)
+                .HasForeignKey(d => d.PlateId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Request_Plate");
         });
 
         modelBuilder.Entity<SupplierDetail>(entity =>
