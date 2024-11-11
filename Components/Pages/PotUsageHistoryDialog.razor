@@ -1,0 +1,39 @@
+﻿@inject PressDetailPageServices PDPS
+
+<RadzenDataGrid Data="@potUsageHistoryList" TItem="PlateHistoryUsage">
+    <Columns>
+        <RadzenDataGridColumn Property="Plate.PlateName" Title="Plate Name" />
+        <RadzenDataGridColumn Property="InstallDateTime" Title="Install Datetime">
+            <Template Context="data">
+                @(data.InstallDateTime.ToString("dd/MM/yyyy hh:mm tt"))
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn Property="RemoveDateTime" Title="Remove Datetime">
+            <Template Context="data">
+                @(data.RemoveDateTime?.ToString("dd/MM/yyyy hh:mm tt"))
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn Title="Duration (Days)">
+            <Template Context="data">
+                @{
+                    var duration = data.RemoveDateTime.HasValue 
+                        ? (data.RemoveDateTime.Value - data.InstallDateTime).Days
+                        : (DateTime.Now - data.InstallDateTime).Days;
+                    @duration
+                }
+            </Template>
+        </RadzenDataGridColumn>
+    </Columns>
+</RadzenDataGrid>
+
+@code {
+    [Parameter]
+    public Pot selectedPot { get; set; }
+
+    private List<PlateHistoryUsage> potUsageHistoryList = new List<PlateHistoryUsage>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        potUsageHistoryList = await PDPS.getPotUsageHistoryByPotID(selectedPot.Id);
+    }
+}

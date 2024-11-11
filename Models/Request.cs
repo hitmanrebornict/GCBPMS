@@ -17,7 +17,11 @@ public partial class Request
 
     public string? RequestStatus { get; set; }
 
+    public int? PlateHistoryUsageId { get; set; }
+
     public virtual Plate Plate { get; set; } = null!;
+
+    public virtual PlateHistoryUsage? PlateHistoryUsage { get; set; }
 
     public virtual ICollection<Repair> Repairs { get; set; } = new List<Repair>();
 }

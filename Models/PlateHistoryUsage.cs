@@ -18,4 +18,6 @@ public partial class PlateHistoryUsage
     public virtual Plate? Plate { get; set; }
 
     public virtual Pot? Pot { get; set; }
+
+    public virtual ICollection<Request> Requests { get; set; } = new List<Request>();
 }

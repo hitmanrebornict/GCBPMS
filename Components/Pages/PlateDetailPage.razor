@@ -5,6 +5,9 @@
 @inject PlateDetailPageServices PDPS
 
 <RadzenCard>
+    <RadzenText TextStyle="TextStyle.DisplayH5">Plate Detail</RadzenText>
+    <hr/>
+
     <div class="plate-details">
         <RadzenLabel Text=@($"Plate Name: {plate.PlateName}") Style="font-weight: bold; display: block;" />
         <RadzenLabel Text=@($"Brand Name: {plate.PlateBrandNavigation?.BrandName ?? "N/A"}") Style="font-weight: bold; display: block;" />
@@ -23,9 +26,8 @@
             <RadzenLabel Text=@($"Status: {plate.PlateStatus}") Style="font-weight: bold; display: block;" />
         }
     </div>
-</RadzenCard>
 
-<RadzenCard>
+    <hr />
 
     <RadzenDataGrid TItem="PlateHistoryUsage" Data=@plateHistoryUsages AllowFiltering="true" AllowSorting="true" FilterMode="FilterMode.Simple">
         <Columns>
@@ -48,7 +50,12 @@
             </RadzenDataGridColumn>
         </Columns>
     </RadzenDataGrid>
+
+    <hr />
+
+    
 </RadzenCard>
+
 
 @code {
     [Parameter]
@@ -56,6 +63,7 @@
 
     private Plate plate = new Plate();
     private List<PlateHistoryUsage> plateHistoryUsages = new List<PlateHistoryUsage>();
+    private List<Repair> plateRepairHistoryList = new List<Repair>();
     private int timeUsed;
     private int daysUsed;
 
@@ -63,6 +71,7 @@
     {
         plate = await PDPS.getPlateDetail(Id);
         plateHistoryUsages = await PDPS.getPlateHistoryUsage(Id);
+        plateRepairHistoryList = await PDPS.getSelectedRepairListByPlateId(Id);
         if(plate.PlateStatus == "Used"  )
         {
             timeUsed = await PDPS.getTimeUsedForPlate(plate);

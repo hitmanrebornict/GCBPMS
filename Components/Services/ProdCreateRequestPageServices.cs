@@ -53,23 +53,25 @@ namespace GCBPMS.Components.Services
                 RemoveDateTime = currentTime
             };
 
+            // Add and save plate history usage first to get its ID
+            await _dbContext.PlateHistoryUsages.AddAsync(newPlateHistoryUsage);
+            await _dbContext.SaveChangesAsync();
+
             var request = new Request
             {
                 PlateId = selectedPlate.Id,
                 RequestDatetime = currentTime,
                 RepairReason = repairReason,
                 RepairRemark = repairRemark,
+                PlateHistoryUsageId = newPlateHistoryUsage.Id // Add the generated ID
             };
 
             // Update pot
             pot.InstallDatetime = null;
             pot.PlateId = null;
 
-            // Add new entities
-            await _dbContext.PlateHistoryUsages.AddAsync(newPlateHistoryUsage);
+            // Add request and save remaining changes
             await _dbContext.Requests.AddAsync(request);
-
-            // Save all changes in a single transaction
             await _dbContext.SaveChangesAsync();
         }
     }

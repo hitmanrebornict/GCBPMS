@@ -1,11 +1,11 @@
 ﻿@page "/maintenance-request-list"
 
-<h3>RequestListPage</h3>
-
 @inject MaintenanceRequestServices MRLPS;
 @inject NavigationManager NavigationManager;
 
 <RadzenCard>
+    <RadzenText TextStyle="TextStyle.DisplayH5">Request List</RadzenText>
+    <hr />
  <RadzenDataGrid TItem="Request" Data=@requests AllowFiltering=true FilterMode="FilterMode.CheckBoxList" AllowSorting=true RowDoubleClick="OnRowDoubleClick">
     <Columns>
         <RadzenDataGridColumn TItem="Request" Property="Plate.PlateName" Title="Plate Name" />

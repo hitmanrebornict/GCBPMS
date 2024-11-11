@@ -1,0 +1,112 @@
+﻿@page "/mt-fill-result/{id:int}/{plateName}"
+
+@inject MaintenanceRequestServices MRS
+
+<RadzenCard>
+    <RadzenText TextStyle="TextStyle.DisplayH5">Fill Repair Result</RadzenText>
+    <hr/>
+
+    <RadzenText Text="@plateName" />
+
+    @if(selectedRepair.RepairType == "In-house" ){
+        <RadzenLabel Text="In-house" />
+        <RadzenLabel Text="@selectedRepair.TechnicianName" />
+
+        <RadzenLabel Text="Accept Datetime" />
+        <RadzenLabel Text="@selectedRepair.StartDatetime.ToString("dd/MM/yyyy hh:mm tt")" />
+
+        <RadzenTextArea Placeholder="Repair Remark" @bind-Value="@selectedRepair.RepairRemark"></RadzenTextArea>
+
+        <RadzenButton Text="Complete" Click="@completeTechnicianRepair" />
+    }
+    else if (selectedRepair.RepairType == "Supplier")
+    {
+        <RadzenLabel Text="Supplier Name:" />
+        <RadzenLabel Text="@(selectedRepair.SupplierDetails.SupplierName)"  />
+
+        <RadzenLabel Text="Accept Datetime" />
+        <RadzenLabel Text="@selectedRepair.StartDatetime.ToString("dd/MM/yyyy hh:mm tt")" />
+
+        <RadzenLabel Text="Estimate Complete Datetime" />
+        <RadzenLabel Text="@selectedRepair.SupplierDetails.Eta.Value.ToString("dd/MM/yyyy")" />
+
+        <RadzenTextArea Placeholder="Repair Remark" @bind-Value="@selectedRepair.RepairRemark"></RadzenTextArea>
+
+        <RadzenButton Text="Complete" Click="@completeSupplierRepair" />
+
+        @if(selectedRepair.RepairStatus == "Cost-Record"){
+            <RadzenLabel Text="Cost Name" />
+            <RadzenTextBox @bind-value="@selectedRepairCost.CostName" Placeholder="Please enter cost name." />
+
+            <RadzenLabel Text="Cost Amount" />
+            <RadzenNumeric TValue="Decimal" @bind-value="@selectedRepairCost.Cost" Placeholder="Please enter cost amount." />
+
+            <RadzenLabel Text="Cost Remark" />
+            <RadzenTextArea @bind-value="@selectedRepairCost.CostRemark" Placeholder="Please enter cost remark." />
+
+            <RadzenButton Text="Record Cost" Click="@recordCost" />
+            <RadzenButton Text="Complete" Click="@completeRecordCost" /> 
+        }
+    }
+
+</RadzenCard>
+
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    [Parameter]
+    public string plateName { get; set; }
+
+    private Repair selectedRepair = new Repair();
+    private RepairCost selectedRepairCost = new RepairCost();
+
+    protected override async Task OnInitializedAsync()
+    {
+        selectedRepair = await MRS.getRepairById(Id);
+        await base.OnInitializedAsync();
+    }
+
+    private async Task completeTechnicianRepair(){
+        try{
+            await MRS.updateTechnicianRepair(selectedRepair);
+            NotificationService.Notify(NotificationSeverity.Success, "Repair Completed", "Repair has been completed successfully");
+        }
+        catch(Exception ex){
+            NotificationService.Notify(NotificationSeverity.Error, "Error", ex.Message);
+        }
+    }
+
+    private async Task completeSupplierRepair(){
+        try{
+            await MRS.updateSupplierRepair(selectedRepair);
+            NotificationService.Notify(NotificationSeverity.Success, "Repair Completed", "Repair has been completed successfully");
+        }
+        catch(Exception ex){
+            NotificationService.Notify(NotificationSeverity.Error, "Error", ex.Message);
+        }
+    }   
+
+    private async Task recordCost(){
+        try{
+            await MRS.recordCost(selectedRepair, selectedRepairCost);
+            NotificationService.Notify(NotificationSeverity.Success, "Cost Recorded", "Cost has been recorded successfully");
+        }
+        catch(Exception ex){
+            NotificationService.Notify(NotificationSeverity.Error, "Error", ex.Message);
+        }
+    }
+
+    private async Task completeRecordCost(){
+        try{
+            await MRS.completeRecordCost(selectedRepair);
+            NotificationService.Notify(NotificationSeverity.Success, "Repair Completed", "Repair has been completed successfully");
+        }
+        catch(Exception ex){
+            NotificationService.Notify(NotificationSeverity.Error, "Error", ex.Message);
+        }
+    }
+
+
+}

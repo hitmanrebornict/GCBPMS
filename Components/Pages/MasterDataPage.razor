@@ -3,88 +3,98 @@
 @inject MasterDataPageServices MDPS
 @inject DialogService DialogService 
 
-<h3>MasterDataPage</h3>
+<RadzenCard>
+    <RadzenText TextStyle="TextStyle.DisplayH5">Master Data</RadzenText>
 
-<RadzenDropDown @bind-Value="selectedFilterOption" Data="@Enum.GetValues(typeof(MasterDataType))" />
-<RadzenButton Icon="add_circle_outline" 
-                  Text="Create New" 
-                  ButtonStyle="ButtonStyle.Primary" 
+    <hr />
+
+    <RadzenDropDown @bind-Value="selectedFilterOption" Data="@Enum.GetValues(typeof(MasterDataType))" />
+    <RadzenButton Icon="add_circle_outline"
+                  Text="Create New"
+                  ButtonStyle="ButtonStyle.Primary"
                   Click="@OpenCreateDialog" />
 
-@if(selectedFilterOption == MasterDataType.Phase)
-{
-    <RadzenDataGrid ref="@phasesGrid" Data="@phases" AllowFiltering="true" AllowPaging="true" AllowSorting="true" PageSize="10">
-        <Columns>
-            <RadzenDataGridColumn Property="Id" Title="Id" />
-            <RadzenDataGridColumn Property="PhaseName" Title="Phase Name" />  
-            <RadzenDataGridColumn Property="PotNumber" Title="Pot Number" />
-            <RadzenDataGridColumn Property="Active" Title="Active" />
-        </Columns>
-    </RadzenDataGrid>
-}   
-else if(selectedFilterOption == MasterDataType.Brand){
-    <RadzenDataGrid ref="@brandsGrid" Data="@brands" AllowFiltering="true" AllowPaging="true" AllowSorting="true" PageSize="10">
-        <Columns>
-        <RadzenDataGridColumn Property="Id" Title="Id" />
-        <RadzenDataGridColumn Property="BrandName" Title="Brand Name" />  
-            <RadzenDataGridColumn Property="Active" Title="Active" />
-        </Columns>
-    </RadzenDataGrid>
-}
-else if(selectedFilterOption == MasterDataType.Plate){
-    <RadzenDataGrid ref="@platesGrid" Data="@plates" AllowFiltering="true" AllowPaging="true" AllowSorting="true" PageSize="10">
+    @if (selectedFilterOption == MasterDataType.Phase)
+    {
+        <RadzenDataGrid ref="@phasesGrid" Data="@phases" AllowFiltering="true" AllowPaging="true" AllowSorting="true" PageSize="10">
             <Columns>
-            <RadzenDataGridColumn Property="Id" Title="Id" />
-            <RadzenDataGridColumn Property="PlateName" Title="Plate Name" />  
-            <RadzenDataGridColumn Property="Active" Title="Active" />
-            <RadzenDataGridColumn Property="BrandId" Title="Brand">
-            <Template Context="plate">
-                @(brands.FirstOrDefault(b => b.Id == plate.PlateBrand)?.BrandName ?? "")
-            </Template>
-        </RadzenDataGridColumn>
-        <RadzenDataGridColumn Property="PlateStatus" Title="Status" />
-        <RadzenDataGridColumn Property="PlateInstallDatetime" Title="Install Date" />
-            <RadzenDataGridColumn Property="PhaseType" Title="Phase Type" >
-            <Template Context="plate">
-                @(phases.FirstOrDefault(p => p.Id == plate.PhaseType)?.PhaseName ?? "")
-            </Template>
-        </RadzenDataGridColumn>
-        </Columns>
-    </RadzenDataGrid>
-}
-else if(selectedFilterOption == MasterDataType.Pot){
-    <RadzenDataGrid ref="@potsGrid" Data="@pots" AllowFiltering="true" AllowPaging="true" AllowSorting="true" PageSize="10">
-        <Columns>
-            <RadzenDataGridColumn Property="Id" Title="Id" />
-        <RadzenDataGridColumn Property="PotName" Title="Pot Name" />  
-        <RadzenDataGridColumn Property="Active" Title="Active" />
-        <RadzenDataGridColumn Property="PressId" Title="Press" >
-            <Template Context="pot">
-                @(presses.FirstOrDefault(p => p.Id == pot.PressId)?.PressName ?? "")
-            </Template>
-        </RadzenDataGridColumn>
-        <RadzenDataGridColumn Property="PlateId" Title="Plate" >
-            <Template Context="pot">
-                @(plates.FirstOrDefault(p => p.Id == pot.PlateId)?.PlateName ?? "")
-            </Template>
-            </RadzenDataGridColumn>
-        </Columns>
-    </RadzenDataGrid>
-}
-else if(selectedFilterOption == MasterDataType.Press){
-    <RadzenDataGrid ref="@pressesGrid" Data="@presses" AllowFiltering="true" AllowPaging="true" AllowSorting="true" PageSize="10">
-        <Columns>
-            <RadzenDataGridColumn Property="Id" Title="Id" />
-        <RadzenDataGridColumn Property="PressName" Title="Press Name" />  
-        <RadzenDataGridColumn Property="Active" Title="Active" />
-        <RadzenDataGridColumn Property="PhaseId" Title="Phase" >
-            <Template Context="press">
-                @(phases.FirstOrDefault(p => p.Id == press.PhaseId)?.PhaseName ?? "")
-                </Template>
-            </RadzenDataGridColumn> 
-        </Columns>
-    </RadzenDataGrid>
-}
+                <RadzenDataGridColumn Property="Id" Title="Id" />
+                <RadzenDataGridColumn Property="PhaseName" Title="Phase Name" />
+                <RadzenDataGridColumn Property="PotNumber" Title="Pot Number" />
+                <RadzenDataGridColumn Property="Active" Title="Active" />
+            </Columns>
+        </RadzenDataGrid>
+    }
+    else if (selectedFilterOption == MasterDataType.Brand)
+    {
+        <RadzenDataGrid ref="@brandsGrid" Data="@brands" AllowFiltering="true" AllowPaging="true" AllowSorting="true" PageSize="10">
+            <Columns>
+                <RadzenDataGridColumn Property="Id" Title="Id" />
+                <RadzenDataGridColumn Property="BrandName" Title="Brand Name" />
+                <RadzenDataGridColumn Property="Active" Title="Active" />
+            </Columns>
+        </RadzenDataGrid>
+    }
+    else if (selectedFilterOption == MasterDataType.Plate)
+    {
+        <RadzenDataGrid ref="@platesGrid" Data="@plates" AllowFiltering="true" AllowPaging="true" AllowSorting="true" PageSize="10">
+            <Columns>
+                <RadzenDataGridColumn Property="Id" Title="Id" />
+                <RadzenDataGridColumn Property="PlateName" Title="Plate Name" />
+                <RadzenDataGridColumn Property="Active" Title="Active" />
+                <RadzenDataGridColumn Property="BrandId" Title="Brand">
+                    <Template Context="plate">
+                        @(brands.FirstOrDefault(b => b.Id == plate.PlateBrand)?.BrandName ?? "")
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn Property="PlateStatus" Title="Status" />
+                <RadzenDataGridColumn Property="PlateInstallDatetime" Title="Install Date" />
+                <RadzenDataGridColumn Property="PhaseType" Title="Phase Type">
+                    <Template Context="plate">
+                        @(phases.FirstOrDefault(p => p.Id == plate.PhaseType)?.PhaseName ?? "")
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    }
+    else if (selectedFilterOption == MasterDataType.Pot)
+    {
+        <RadzenDataGrid ref="@potsGrid" Data="@pots" AllowFiltering="true" AllowPaging="true" AllowSorting="true" PageSize="10">
+            <Columns>
+                <RadzenDataGridColumn Property="Id" Title="Id" />
+                <RadzenDataGridColumn Property="PotName" Title="Pot Name" />
+                <RadzenDataGridColumn Property="Active" Title="Active" />
+                <RadzenDataGridColumn Property="PressId" Title="Press">
+                    <Template Context="pot">
+                        @(presses.FirstOrDefault(p => p.Id == pot.PressId)?.PressName ?? "")
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn Property="PlateId" Title="Plate">
+                    <Template Context="pot">
+                        @(plates.FirstOrDefault(p => p.Id == pot.PlateId)?.PlateName ?? "")
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    }
+    else if (selectedFilterOption == MasterDataType.Press)
+    {
+        <RadzenDataGrid ref="@pressesGrid" Data="@presses" AllowFiltering="true" AllowPaging="true" AllowSorting="true" PageSize="10">
+            <Columns>
+                <RadzenDataGridColumn Property="Id" Title="Id" />
+                <RadzenDataGridColumn Property="PressName" Title="Press Name" />
+                <RadzenDataGridColumn Property="Active" Title="Active" />
+                <RadzenDataGridColumn Property="PhaseId" Title="Phase">
+                    <Template Context="press">
+                        @(phases.FirstOrDefault(p => p.Id == press.PhaseId)?.PhaseName ?? "")
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    }
+
+</RadzenCard>
+
 
 @code {
 

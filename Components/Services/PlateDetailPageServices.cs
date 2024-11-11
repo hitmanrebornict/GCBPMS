@@ -20,6 +20,7 @@ namespace GCBPMS.Components.Services
                     .ThenInclude(p => p.Press)
                     .ThenInclude(p => p.Phase)
                 .Include(p => p.PlateBrandNavigation)
+                .AsNoTracking()
                 .Where(p => p.Active == true).ToListAsync();
         }
 
@@ -48,5 +49,19 @@ namespace GCBPMS.Components.Services
             var timeUsed = currentDate - potInstallDateTime;
             return timeUsed.Value.Days;
         }
+
+        public async Task<List<Repair>> getSelectedRepairListByPlateId(int plateId)
+        {
+            var selectedRepairList = await _dbContext.Repairs
+                                        .Include(r => r.Request)
+                                        .Include(r => r.SupplierDetails)
+                                        .Include(r => r.RepairCosts)
+                                        .Where(r => r.Request.PlateId == plateId)
+                                        .ToListAsync();
+
+            return selectedRepairList;
+        }
+
+
     }
 }   

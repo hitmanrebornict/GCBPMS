@@ -15,10 +15,10 @@ namespace GCBPMS
 			var builder = WebApplication.CreateBuilder(args);
 
 			builder.Services.AddDbContext<PmsContext>(options =>
-				   options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+				   options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")), ServiceLifetime.Transient);
 
             builder.Services.AddDbContext<GCBPMSIdentityDbContext>(options =>
-                   options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+                   options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")), ServiceLifetime.Transient);
 
             builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true).AddEntityFrameworkStores<GCBPMSIdentityDbContext>();
 
@@ -26,7 +26,6 @@ namespace GCBPMS
 			builder.Services.AddRazorComponents()
 				.AddInteractiveServerComponents();
 
-			builder.Services.AddTransient<PmsContext>();
 			builder.Services.AddScoped<GlobalFunction>();
             builder.Services.AddRadzenComponents();
 			builder.Services.AddScoped<MasterDataPageServices>();

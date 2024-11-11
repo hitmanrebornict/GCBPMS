@@ -247,6 +247,10 @@ public partial class PmsContext : DbContext
                 .IsUnicode(false)
                 .HasDefaultValue("Requested");
 
+            entity.HasOne(d => d.PlateHistoryUsage).WithMany(p => p.Requests)
+                .HasForeignKey(d => d.PlateHistoryUsageId)
+                .HasConstraintName("FK_Requests_PlateHistoryUsage");
+
             entity.HasOne(d => d.Plate).WithMany(p => p.Requests)
                 .HasForeignKey(d => d.PlateId)
                 .OnDelete(DeleteBehavior.ClientSetNull)

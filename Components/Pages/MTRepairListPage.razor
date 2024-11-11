@@ -1,0 +1,32 @@
+﻿@page "/mt-repair-list"
+
+@inject MaintenanceRequestServices MRS
+@inject NavigationManager NavigationManager
+
+<RadzenCard>
+    <RadzenText TextStyle="TextStyle.DisplayH5">Repair List</RadzenText>
+    <hr />
+    <RadzenDataGrid Data="@repairList" TItem="Repair" RowDoubleClick="OnRowDoubleClick">
+        <Columns>
+            <RadzenDataGridColumn Property="Request.Plate.PlateName" Title="Plate Name" />
+            <RadzenDataGridColumn Property="Request.RequestDatetime" Title="Request Date" />
+            <RadzenDataGridColumn Property="RepairType" Title="Repair Type" />
+            <RadzenDataGridColumn Property="RepairStatus" Title="Repair Status" />
+        </Columns>
+    </RadzenDataGrid>
+</RadzenCard>
+
+@code {
+
+    private List<Repair> repairList = new List<Repair>();
+    protected override async Task OnInitializedAsync()
+    {
+        repairList = await MRS.getRepairList();
+        await base.OnInitializedAsync();
+    }
+
+    private void OnRowDoubleClick(DataGridRowMouseEventArgs<Repair> args)
+    {
+        NavigationManager.NavigateTo($"/mt-fill-result/{args.Data.Id}/{args.Data.Request.Plate.PlateName}");
+    }
+}

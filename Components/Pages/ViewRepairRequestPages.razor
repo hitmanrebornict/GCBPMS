@@ -5,8 +5,9 @@
 @inject IJSRuntime JS;
 
 <RadzenCard>
-   
-        <h2>Request Detail</h2>
+
+    <RadzenText TextStyle="TextStyle.DisplayH5">Request Detail</RadzenText>
+    <hr />
         <div>
             <RadzenLabel Text="Plate Name:" />
             <RadzenText Text=@(plateName) />
@@ -26,10 +27,19 @@
         <hr />
 
         <h3>Maintenance Part</h3>
-        <RadzenLabel Text="Repair Type" />
-        <RadzenDropDown TValue="string" @bind-Value="selectedRepair.RepairType" Data=@repairTypes  />
+        @* <RadzenLabel Text="Repair Type" />
+        <RadzenDropDown TValue="string" @bind-Value="selectedRepair.RepairType" Data=@repairTypes  /> *@
 
-        @if (!string.IsNullOrEmpty(selectedRepair?.RepairType) && selectedRepair.RepairType == "Supplier")
+    <div class="d-flex justify-content-left">
+        <RadzenSelectBar @bind-Value=@selectedOption TValue="int" class="mb-3">
+            <Items>
+                <RadzenSelectBarItem Text="Supplier" Value="1" />
+                <RadzenSelectBarItem Text="In-house" Value="2" />
+            </Items>
+        </RadzenSelectBar>
+    </div>
+
+        @if (selectedOption == 1)
         {
             <RadzenTemplateForm TItem="SupplierDetail" Data=@selectedSupplier Submit="@(async () => await onSupplierSubmit())">
             <RadzenLabel Text="Supplier" />
@@ -43,7 +53,7 @@
             <RadzenButton Text="Submit" ButtonType="ButtonType.Submit" />
             </RadzenTemplateForm>
         }
-        else
+        else if(selectedOption == 2)
         {
             <RadzenTemplateForm TItem="Repair" Data=@selectedRepair Submit="@(async () => await onTechnicianSubmit())">
             <RadzenLabel Text="Technician Name" />
@@ -64,7 +74,7 @@
     private SupplierDetail selectedSupplier = new();
     private string plateName;
 
-    private List<string> repairTypes = new List<string> {"In-house", "Supplier"};
+    private int selectedOption = 1;
 
     protected override async Task OnInitializedAsync(){
         try{    
@@ -74,8 +84,6 @@
                 NavigationManager.NavigateTo("/maintenance-request-list");
                 return;
             }
-
-            selectedRepair = new Repair { RepairType = "In-house" };
             plateName = request.Plate.PlateName;
         }
         catch (Exception ex){
@@ -86,20 +94,21 @@
     private async Task onSupplierSubmit(){
         try{
             await MRS.insertIntoSupplierRepair(selectedSupplier, request);
-            NotificationServices.Notify(NotificationSeverity.Success, "Repair Request Accepted");
+            NotificationService.Notify(NotificationSeverity.Success, "Repair Request Accepted");
         }
         catch (Exception ex){
-            NotificationServices.Notify(NotificationSeverity.Error, ex.Message);
+            NotificationService.Notify(NotificationSeverity.Error, ex.Message);
         }
     }
 
     private async Task onTechnicianSubmit(){
         try{
             await MRS.insertIntoTechnicianRepair(selectedRepair, request);
-            NotificationServices.Notify(NotificationSeverity.Success, "Repair Request Accepted");
+            NotificationService.Notify(NotificationSeverity.Success, "Repair Request Accepted");
         }
         catch (Exception ex){
-            NotificationServices.Notify(NotificationSeverity.Error, ex.Message);
+            NotificationService.Notify(NotificationSeverity.Error, ex.Message);
         }
     }
+
 }

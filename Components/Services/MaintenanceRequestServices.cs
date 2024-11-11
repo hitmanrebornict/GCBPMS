@@ -57,5 +57,59 @@ namespace GCBPMS.Components.Services
             await _dbContext.SaveChangesAsync();
         }
 
+        public async Task<List<Repair>> getRepairList(){
+            return await _dbContext.Repairs
+                        .Include(r => r.Request)
+                            .ThenInclude(r => r.Plate)
+                        .Include(r => r.SupplierDetails)
+                        .Where(r => r.RepairStatus == "Repairing" || r.RepairStatus == "Cost-Record")
+                        .OrderByDescending(r => r.StartDatetime)
+                        .AsNoTracking()
+                        .ToListAsync();
+
+        }
+
+        public async Task<Repair> getRepairById(int id){
+            return await _dbContext.Repairs
+                            .Include(r => r.SupplierDetails)
+                            .Include(r => r.RepairCosts)
+                            .Include(r => r.Request)
+                            .Include(r => r.Request.Plate)
+                        .FirstOrDefaultAsync(r => r.Id == id);
+        }
+
+        public async Task updateTechnicianRepair(Repair selectedRepair)
+        {
+            selectedRepair.Request.Plate.PlateStatus = "Inventory";
+            selectedRepair.Request.RequestStatus = "Completed";
+            selectedRepair.FinishDatetime = DateTime.Now;
+            selectedRepair.RepairStatus = "Completed";
+            _dbContext.Update(selectedRepair);
+            await _dbContext.SaveChangesAsync();
+        }
+
+        public async Task updateSupplierRepair(Repair selectedRepair)
+        {
+            selectedRepair.Request.Plate.PlateStatus = "Inventory";
+            selectedRepair.Request.RequestStatus = "Completed";
+            selectedRepair.FinishDatetime = DateTime.Now;
+            selectedRepair.RepairStatus = "Cost-Record";
+            _dbContext.Update(selectedRepair);
+            await _dbContext.SaveChangesAsync();
+        }
+
+        public async Task recordCost(Repair repair, RepairCost repairCost){
+            repairCost.Id = 0;
+            repairCost.RepairId = repair.Id;
+            await _dbContext.RepairCosts.AddAsync(repairCost);
+            await _dbContext.SaveChangesAsync();
+        }
+
+        public async Task completeRecordCost(Repair repair){
+            repair.RepairStatus = "Completed";
+            _dbContext.Update(repair);
+            await _dbContext.SaveChangesAsync();
+        }
+
     }
 }

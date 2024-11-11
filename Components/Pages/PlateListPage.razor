@@ -3,34 +3,40 @@
 @inject PlateDetailPageServices PDPS
 @inject NavigationManager NavigationManager
 
-<h3>PlateListPage</h3>
+<RadzenCard>
+    <RadzenText TextStyle="TextStyle.DisplayH5">Plate List</RadzenText>
+    <hr/>
 
-<RadzenDataGrid TItem="Plate" Data=@plates AllowFiltering="true" AllowSorting="true" FilterMode="FilterMode.Simple" RowDoubleClick="OnRowDoubleClick">
-    <Columns>
-        <RadzenDataGridColumn TItem="Plate" Property="PlateName" Title="Plate Name" />
-        <RadzenDataGridColumn TItem="Plate" Property="PlateStatus" Title="Plate Status" />
-        <RadzenDataGridColumn TItem="Plate" Title="Phase Name" Property="Pots[0].Press.Phase.PhaseName">
-            <Template Context="plate">
-                @(plate.Pots.FirstOrDefault()?.Press?.Phase?.PhaseName ?? "N/A")
-            </Template>
-        </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="Plate" Title="Press Name" Property="Pots[0].Press.PressName">
-            <Template Context="plate">
-                @(plate.Pots.FirstOrDefault()?.Press?.PressName ?? "N/A")
-            </Template>
-        </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="Plate" Title="Pot Name" Property="Pots[0].PotName">
-            <Template Context="plate">
-                @(plate.Pots.FirstOrDefault()?.PotName ?? "N/A")
-            </Template>
-        </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="Plate" Title="Brand Name" Property="PlateBrandNavigation.BrandName">
-            <Template Context="plate">
-                @(plate.PlateBrandNavigation?.BrandName ?? "N/A")
-            </Template>
-        </RadzenDataGridColumn>
-    </Columns>
-</RadzenDataGrid>
+    <RadzenDataGrid TItem="Plate" Data=@plates AllowFiltering="true" AllowSorting="true" FilterMode="FilterMode.Simple" RowDoubleClick="OnRowDoubleClick">
+        <Columns>
+            <RadzenDataGridColumn TItem="Plate" Property="PlateName" Title="Plate Name" />
+            <RadzenDataGridColumn TItem="Plate" Property="PlateStatus" Title="Plate Status" />
+            <RadzenDataGridColumn TItem="Plate" Title="Phase Name" Property="Pots[0].Press.Phase.PhaseName">
+                <Template Context="plate">
+                    @(plate.Pots.FirstOrDefault()?.Press?.Phase?.PhaseName ?? "N/A")
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="Plate" Title="Press Name" Property="Pots[0].Press.PressName">
+                <Template Context="plate">
+                    @(plate.Pots.FirstOrDefault()?.Press?.PressName ?? "N/A")
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="Plate" Title="Pot Name" Property="Pots[0].PotName">
+                <Template Context="plate">
+                    @(plate.Pots.FirstOrDefault()?.PotName ?? "N/A")
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="Plate" Title="Brand Name" Property="PlateBrandNavigation.BrandName">
+                <Template Context="plate">
+                    @(plate.PlateBrandNavigation?.BrandName ?? "N/A")
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+</RadzenCard>
+
+
+
 
 @code {
     private List<Plate> plates = new List<Plate>();

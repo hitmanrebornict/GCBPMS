@@ -1,22 +1,24 @@
 ﻿@page "/press-detail-page"
 
-<h3>Press DetailPage</h3>
-
 @inject GlobalFunction globalFunction
 @inject PressDetailPageServices PDPS
+@inject DialogService DialogService
 
 <RadzenCard>
+    <RadzenText TextStyle="TextStyle.DisplayH5">Press Detail</RadzenText>
+    <hr />
+
     <RadzenDropDown Data="@phases" TextProperty="PhaseName" @bind-Value="selectedPhase" Change="@loadPressDataByPhaseID" />
     <RadzenDropDown Data="@presses" TextProperty="PressName" ValueProperty="Id" @bind-Value="pressID" Change="@loadPotsDataByPressID" />
 
-    @if (pots is null || pots.Count == 0)
+    @if ((pots is null || pots.Count == 0) && pressID > 0)
     {
         <RadzenButton Text="Create New Pot" Click="() => createPots(selectedPhase)" />
     }
 
     @if (pressID > 0)
     {
-        <RadzenDataGrid ref="@potsGrid" Data="@pots" AllowFiltering="true" AllowSorting="true">
+        <RadzenDataGrid ref="@potsGrid" Data="@pots" AllowFiltering="true" AllowSorting="true" TItem="Pot" RowDoubleClick="onRowDoubleClick" >
             <Columns>
 
                 <RadzenDataGridColumn Property="PotName" Title="Pot Name" />
@@ -63,5 +65,9 @@
 
     private async Task createPots(Phase selectedPhase){
         await PDPS.CreatePotsAsync(selectedPhase, pressID);
+    }
+
+    private async Task onRowDoubleClick(DataGridRowMouseEventArgs<Pot> args){
+        await DialogService.OpenAsync<PotUsageHistoryDialog>("Pot Usage History", new Dictionary<string, object> { ["selectedPot"] = args.Data });
     }
 }

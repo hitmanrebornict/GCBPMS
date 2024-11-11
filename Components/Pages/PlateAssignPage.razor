@@ -3,9 +3,10 @@
 @inject GlobalFunction GF
 @inject PlateAssignService PAS
 @inject NotificationService NotificationService
-<h3>Plate Assign</h3>
 
 <RadzenCard>
+    <RadzenText TextStyle="TextStyle.DisplayH5">Plate Assign</RadzenText>
+    <hr />
     <RadzenTemplateForm TItem="string" Data=@selectedAction Submit=@OnSubmit>
         <RadzenFieldset Text="Selection">
             <div class="row">
@@ -32,26 +33,33 @@
                     <RadzenDropDown @bind-Value="selectedAction" Data="@actions" Change="@OnActionChange" Style="width: 100%;" />
                 </div>
             </div>
-        </RadzenFieldset>
 
-        <RadzenFieldset Text="Details">
-            @if (selectedAction == "Install")
-            {
-                <div class="row">
-                    <div class="col-12">
-                        <RadzenLabel Text="Plate Name" />
-                        <RadzenDropDown @bind-Value="selectedPlate" Data="@platesList" TextProperty="PlateName" Style="width: 100%;" />
-                    </div>
-                </div>
-            }
-            else if (selectedAction == "Switching" && selectedPlate != null)
-            {
+            @if (selectedAction == "Switching" && selectedPlate != null){
                 <div class="row">
                     <div class="col-12">
                         <RadzenLabel Text="Current Plate Name" />
                         <RadzenLabel Text="@selectedPlate.PlateName" Style="font-weight: bold;" />
                     </div>
                 </div>
+            }
+            
+        </RadzenFieldset>
+
+       
+            @if (selectedAction == "Install")
+            {
+                <RadzenFieldset Text="Details">
+                <div class="row">
+                    <div class="col-12">
+                        <RadzenLabel Text="Plate Name" />
+                        <RadzenDropDown @bind-Value="selectedPlate" Data="@platesList" TextProperty="PlateName" Style="width: 100%;" />
+                    </div>
+                </div>
+                 </RadzenFieldset>
+            }
+            else if (selectedAction == "Switching" && selectedPlate != null)
+            {
+            <RadzenFieldset Text="Details">
                 <div class="row">
                     <div class="col-12">
                         <RadzenLabel Text="Switch With:" />
@@ -88,8 +96,9 @@
                         }
                     </div>
                 </div>
+            </RadzenFieldset>
             }
-        </RadzenFieldset>
+        
 
         <div class="row" style="margin-top: 10px;">
             <div class="col-12">

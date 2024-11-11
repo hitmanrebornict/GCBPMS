@@ -4,11 +4,13 @@
 @inject NotificationService NotificationService
 @inject ProdCreateRequestPageServices PCPPS
 
-<h3>Create Request</h3>
+
 
 <div class="row mb-3">
     <div class="col">
         <RadzenCard>
+            <RadzenText TextStyle="TextStyle.DisplayH5">Create Request</RadzenText>
+            <hr />
             <div class="d-flex justify-content-left">
                 <RadzenSelectBar @bind-Value=@selectedOption TValue="int" class="mb-3">
                     <Items>
