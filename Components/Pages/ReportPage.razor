@@ -1,0 +1,162 @@
+﻿@attribute [Authorize]
+
+@page "/report-page"
+
+<title>Report</title>
+
+@inject ReportPageServices RPS
+
+<PageTitle>Report</PageTitle>
+
+<RadzenCard>
+	<RadzenText Text="Report" TextStyle="TextStyle.DisplayH5"></RadzenText>
+	<hr />
+	<RadzenText Text="Report Type" Style="margin-top:8px;"> </RadzenText>
+	<RadzenDropDown TValue="ReportType" Data="@Enum.GetValues(typeof(ReportType))" @bind-Value="@reportTypeSelection" Style="margin-bottom:8px;" Placeholder="Report type" Change="@onReportDropDownChange"></RadzenDropDown>
+
+	@if (reportTypeSelection == ReportType.RepairHistoryReport)
+	{
+		<RadzenButton Icon="add_circle" Text="Generate" Style="margin-top:8px;" Click="@(async () => await buttonRepairReportOnClick())" />
+		@if (!string.IsNullOrEmpty(downloadPDFPath))
+		{
+			<a class="radzen-button-style" href="@downloadPDFPath" download style="margin-left: 8px;">Download Excel</a>
+		}
+	}
+	else if(reportTypeSelection == ReportType.PotHistoryUsageReport)
+	{
+		<RadzenText Text="Phase"></RadzenText>
+		<RadzenDropDown TValue="Phase" Data="@phaseList" @bind-Value="@selectedPhase" TextProperty="PhaseName" Change="@phaseListOnChanged"></RadzenDropDown>
+
+		<RadzenText Text="Press"></RadzenText>
+		<RadzenDropDown TValue="Press" Data="@pressList" @bind-Value="@selectedPress" TextProperty="PressName" Change="@pressListOnChanged"></RadzenDropDown>
+
+		<RadzenText Text="Pot"></RadzenText>
+		<RadzenDropDown TValue="Pot" Data="@potList" @bind-Value="@selectedPot" TextProperty="PotName" ></RadzenDropDown>
+
+		<RadzenText Text="Pot"></RadzenText>
+		<RadzenDropDown TValue="List<Plate>" Data="@plateList" @bind-Value="@plateList" Multiple="true"></RadzenDropDown>
+
+		<RadzenText Text="Date Range" Style="margin-top:8px;" />
+		<RadzenDatePicker @bind-Value=@startDateTime DateFormat="dd/MM/yyyy"></RadzenDatePicker>
+		<span>-</span>
+		<RadzenDatePicker @bind-Value=@endDateTime DateFormat="dd/MM/yyyy"></RadzenDatePicker>
+		<br/>
+
+		<RadzenButton Icon="add_circle" Text="Generate" Style="margin-top:8px;" Click="@(async () => await buttonPotUsageHistoryReportOnClick())" />
+		@if (!string.IsNullOrEmpty(downloadPDFPath))
+		{
+			<a class="radzen-button-style" href="@downloadPDFPath" download style="margin-left: 8px;">Download Excel</a>
+		}
+	}
+	@* else if(reportTypeSelection == ReportType.PressDetail)
+	{
+		
+	} *@
+	else if(reportTypeSelection == ReportType.PlateDetail)
+	{
+		<RadzenText Text="Phase"></RadzenText>
+		<RadzenDropDown TValue="Phase" Data="@phaseList" @bind-Value="@selectedPhase" TextProperty="PhaseName" Change="@phaseListOnChanged"></RadzenDropDown>
+
+		@* <RadzenText Text="Press"></RadzenText>
+		<RadzenDropDown TValue="Press" Data="@pressList" @bind-Value="@selectedPress" TextProperty="PressName" Change="@pressListOnChanged"></RadzenDropDown>
+
+		<RadzenText Text="Pot"></RadzenText>
+		<RadzenDropDown TValue="Pot" Data="@potList" @bind-Value="@selectedPot" TextProperty="PotName"></RadzenDropDown> *@
+
+		<RadzenText Text="Brand"></RadzenText>
+		<RadzenDropDown TValue="Brand" Data="@brandList" @bind-Value="@selectedBrand" TextProperty="BrandName"></RadzenDropDown>
+
+		<RadzenText Text = "Status"></RadzenText>
+		<RadzenDropDown TValue="string" Data="@plateStatus" @bind-Value="@selectedPlateStatus" ></RadzenDropDown>
+
+		
+		@* <RadzenText Text="Install Date time" Style="margin-top:8px;" />
+		<RadzenDatePicker @bind-Value=@startDateTime DateFormat="dd/MM/yyyy"></RadzenDatePicker>
+		<span>-</span>
+		<RadzenDatePicker @bind-Value=@endDateTime DateFormat="dd/MM/yyyy"></RadzenDatePicker>
+		<br /> *@
+
+		<RadzenButton Icon="add_circle" Text="Generate" Style="margin-top:8px;" Click="@(async () => await buttonPlateReportOnClick())" />
+		@if (!string.IsNullOrEmpty(downloadPDFPath))
+		{
+			<a class="radzen-button-style" href="@downloadPDFPath" download style="margin-left: 8px;">Download Excel</a>
+		}
+	}
+</RadzenCard>
+
+
+@code {
+	private ReportType reportTypeSelection;
+	private DateTime startDateTime, endDateTime;
+
+	private List<Phase> phaseList = new List<Phase>();
+	private List<Press> pressList = new List<Press>();
+	private List<Pot> potList = new List<Pot>();
+	private List<Plate> plateList = new List<Plate>();
+
+	private List<Brand> brandList = new List<Brand>();
+	private List<string> plateStatus = new List<string>()
+	{
+		"Used",
+		"Inventory",
+		"Repairing"
+	};
+	private string selectedPlateStatus;
+
+
+	private string downloadPDFPath;
+	private Phase selectedPhase;
+	private Press selectedPress;
+	private Pot selectedPot;
+	private Brand selectedBrand;
+
+	public enum ReportType
+	{
+		RepairHistoryReport,
+		PotHistoryUsageReport,
+		
+		PlateDetail
+	}
+
+	protected override async Task OnInitializedAsync()
+	{
+		phaseList = await RPS.getPhaseListAsync();
+		await base.OnInitializedAsync();
+	}
+
+	private async Task buttonPotUsageHistoryReportOnClick()
+	{
+		downloadPDFPath = await RPS.getPotHistoryUsageReport(selectedPhase,selectedPress,selectedPot,startDateTime,endDateTime);
+	}
+
+	private async Task buttonPlateReportOnClick()
+	{
+		downloadPDFPath = await RPS.getPlateReportAsync(selectedPhase, selectedBrand, selectedPlateStatus);
+	}
+
+	private async Task buttonRepairReportOnClick()
+	{
+		downloadPDFPath = await RPS.getRepairReportAsync();
+	}
+
+	private void phaseListOnChanged()
+	{
+		pressList = selectedPhase.Presses.Where(p => p.Active).ToList();
+	}
+
+	private void pressListOnChanged()
+	{
+		potList = selectedPress.Pots.Where(p => p.Active).ToList();
+	}
+
+	private async Task onReportDropDownChange()
+	{
+		if (reportTypeSelection == ReportType.PlateDetail)
+		{
+			brandList = await GF.getActiveBrand();
+		}
+	}
+
+
+
+}

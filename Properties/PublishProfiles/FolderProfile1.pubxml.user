@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--
+https://go.microsoft.com/fwlink/?LinkID=208121.
+-->
+<Project>
+  <PropertyGroup>
+    <_PublishTargetUrl>C:\Users\yicheng.yeong\source\repos\GCBPMS\bin\Release\net8.0\publish\</_PublishTargetUrl>
+    <History>True|2025-03-25T01:26:37.4537080Z||;True|2025-02-27T15:37:28.6327130+08:00||;True|2025-02-24T11:52:05.9231408+08:00||;True|2025-02-14T10:36:16.2892103+08:00||;True|2025-02-05T15:11:40.2441435+08:00||;True|2024-12-27T15:41:18.5879025+08:00||;True|2024-12-13T14:11:05.2670072+08:00||;True|2024-12-05T13:35:24.7319956+08:00||;</History>
+    <LastFailureDetails />
+  </PropertyGroup>
+</Project>

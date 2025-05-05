@@ -8,69 +8,109 @@
     <div class="row" style="margin-bottom: 16px">
         @switch (DataType)
         {
-            case MasterDataType.Phase:
+            case GlobalFunction.MasterDataType.Phase:
                 <div class="col-md-12">
                     <RadzenLabel Text="Phase Name" />
                     <RadzenTextBox @bind-Value="@model.PhaseName" style="width: 100%;" Name="PhaseName"/>
-                    <RadzenRequiredValidator Component="PhaseName" Text="Phase name is required" />
+                    <RadzenRequiredValidator Component="PhaseName" Text="Phase name is required" style="width: 100%;" />
                     <RadzenLabel Text="Pot Number" />
                     <RadzenNumeric @bind-Value="@model.PotNumber" style="width: 100%;" Name="PotNumber"/>
-                    <RadzenRequiredValidator Component="PotNumber" Text="Pot number is required" />
+                    <RadzenRequiredValidator Component="PotNumber" Text="Pot number is required" style="width: 100%;" />
                 </div>
                 break;
 
-            case MasterDataType.Brand:
+            case GlobalFunction.MasterDataType.Brand:
                 <div class="col-md-12">
                     <RadzenLabel Text="Brand Name" />
                     <RadzenTextBox @bind-Value="@model.BrandName" style="width: 100%;" Name="BrandName"/>
-                    <RadzenRequiredValidator Component="BrandName" Text="Brand name is required" />
+                    <RadzenRequiredValidator Component="BrandName" Text="Brand name is required" style="width: 100%;" />
                 </div>
                 break;
 
-            case MasterDataType.Plate:
+            case GlobalFunction.MasterDataType.Plate:
                 <div class="col-md-12">
                     <RadzenLabel Text="Plate Name" />
                     <RadzenTextBox @bind-Value="@model.PlateName" style="width: 100%;" Name="PlateName"/>
-                    <RadzenRequiredValidator Component="PlateName" Text="Plate name is required" />
+                    <RadzenRequiredValidator Component="PlateName" Text="Plate name is required" style="width: 100%;" />
                     <RadzenLabel Text="Brand" />
                     <RadzenDropDown Data="@Brands" TextProperty="BrandName" ValueProperty="Id" 
-                                  @bind-Value="@model.SelectedBrandId" style="width: 100%;" Name="SelectedBrand" />
-                    <RadzenRequiredValidator Component="SelectedBrand" Text="Brand is required" />
+                    @bind-Value="@model.SelectedBrandId" style="width: 100%;" Name="SelectedBrand" />
+                    <RadzenRequiredValidator Component="SelectedBrand" Text="Brand is required" style="width: 100%;" />
                     <RadzenLabel Text="Phase Type" />
                     <RadzenDropDown Data="@Phases" TextProperty="PhaseName" ValueProperty="Id" 
-                                  @bind-Value="@model.SelectedPhaseId" style="width: 100%;" Name="SelectedPhase" />
-                    <RadzenRequiredValidator Component="SelectedPhase" Text="Phase is required" />
+                    @bind-Value="@model.SelectedPhaseId" style="width: 100%;" Name="SelectedPhase" />
+                    <RadzenRequiredValidator Component="SelectedPhase" Text="Phase is required" style="width: 100%;" />
                     <RadzenLabel Text="Install Date" />
                     <RadzenDatePicker @bind-Value="@model.InstallDate" style="width: 100%;" Name="InstallDate" />
-                    <RadzenRequiredValidator Component="InstallDate" Text="Install date is required" />
+                    <RadzenRequiredValidator Component="InstallDate" Text="Install date is required" style="width: 100%;" />
                 </div>
                 break;
 
-            case MasterDataType.Pot:
+            case GlobalFunction.MasterDataType.Pot:
                 <div class="col-md-12">
                     <RadzenLabel Text="Pot Name" />
                     <RadzenTextBox @bind-Value="@model.PotName" style="width: 100%;" Name="PotName"/>
-                    <RadzenRequiredValidator Component="PotName" Text="Pot name is required" />
+                    <RadzenRequiredValidator Component="PotName" Text="Pot name is required" style="width: 100%;" />
                     <RadzenLabel Text="Press" />
                     <RadzenDropDown Data="@Presses" TextProperty="PressName" ValueProperty="Id" 
-                                  @bind-Value="@model.SelectedPressId" style="width: 100%;" Name="SelectedPress" />
-                    <RadzenRequiredValidator Component="SelectedPress" Text="Press is required" />
-                    <RadzenLabel Text="Plate" />
-                    <RadzenDropDown Data="@Plates" TextProperty="PlateName" ValueProperty="Id" 
+                    @bind-Value="@model.SelectedPressId" style="width: 100%;" Name="SelectedPress" />
+                    <RadzenRequiredValidator Component="SelectedPress" Text="Press is required" style="width: 100%;" />
+                    @*  <RadzenLabel Text="Plate" /> *@
+                    @* <RadzenDropDown Data="@Plates" TextProperty="PlateName" ValueProperty="Id" 
                                   @bind-Value="@model.SelectedPlateId" style="width: 100%;" Name="SelectedPlate" />
-                    <RadzenRequiredValidator Component="SelectedPlate" Text="Plate is required" />
+                    <RadzenRequiredValidator Component="SelectedPlate" Text="Plate is required" /> *@
                 </div>
                 break;
 
-            case MasterDataType.Press:
+            case GlobalFunction.MasterDataType.Press:
                 <div class="col-md-12">
                     <RadzenLabel Text="Press Name" />
                     <RadzenTextBox @bind-Value="@model.PressName" style="width: 100%;" Name="PressName"/>
-                    <RadzenRequiredValidator Component="PressName" Text="Press name is required" />
+                    <RadzenRequiredValidator Component="PressName" Text="Press name is required" style="width: 100%;" />
                     <RadzenLabel Text="Phase" />
                     <RadzenDropDown Data="@Phases" TextProperty="PhaseName" ValueProperty="Id" 
-                                  @bind-Value="@model.SelectedPhaseId" style="width: 100%;" Name="SelectedPhase" />
-                    <RadzenRequiredValidator Component="SelectedPhase" Text="Phase is required" />
+                    @bind-Value="@model.SelectedPhaseId" style="width: 100%;" Name="SelectedPhase" />
+                    <RadzenRequiredValidator Component="SelectedPhase" Text="Phase is required" style="width: 100%;" />
+                </div>
+                break;
+            case GlobalFunction.MasterDataType.User:
+                <div class="col-md-12">
+                    <div style="margin-bottom: 1rem" class="row">
+                        <div class="col-md-3">
+                            <RadzenLabel Text="Username" Component="UserName" style="width: 100%">
+                            </RadzenLabel>
+                        </div>
+                        <div class="col-md-9">
+                            <RadzenTextBox MaxLength="100" style="width: 100%" @bind-Value="addedName" Name="ParameterName" Placeholder="Username" />
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 1rem" class="row">
+                        <div class="col-md-3">
+                            <RadzenLabel Text="Password" Component="UserName" style="width: 100%">
+                            </RadzenLabel>
+                        </div>
+                        <div class="col-md-9">
+                            <RadzenPassword MaxLength="100" style="width: 100%" @bind-Value="password" Name="ParameterName" Placeholder="Password" />
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 1rem" class="row">
+                        <div class="col-md-3">
+                            <RadzenLabel Text="Confirm Password" Component="UserName" style="width: 100%">
+                            </RadzenLabel>
+                        </div>
+                        <div class="col-md-9">
+                            <RadzenPassword MaxLength="100" style="width: 100%" @bind-Value="confirmPassword" Name="ParameterName" Placeholder="Confirm Password" />
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 1rem" class="row">
+                        <div class="col-md-3">
+                            <RadzenLabel Text="Role" Component="Role" style="width: 100%">
+                            </RadzenLabel>
+                        </div>
+                        <div class="col-md-9">
+                            <RadzenDropDown TValue="string" Data=@roleList @bind-Value="selectedRole" style="width: 100%"></RadzenDropDown>
+                        </div>
+                    </div>
                 </div>
                 break;
         }
@@ -101,17 +141,10 @@
         public string PressName { get; set; }
     }
 
-    public enum MasterDataType
-    {
-        Phase,
-        Brand, 
-        Plate,
-        Pot,
-        Press
-    }
+
 
     [Parameter]
-    public MasterDataType DataType { get; set; }
+    public GlobalFunction.MasterDataType DataType { get; set; }
 
     [Parameter] 
     public List<Brand> Brands { get; set; }
@@ -125,32 +158,61 @@
     [Parameter]
     public List<Press> Presses { get; set; }
 
+    private List<string> roleList = new List<string>()
+    {
+        "Maintenance User",
+        "Maintenance Admin",
+        "Production User",
+        "Production Admin",
+        "Admin"
+    };
+
+    private string addedName, selectedRole = "Admin", password, confirmPassword;
+
     private async Task OnSubmit()
     {
         try
         {
             switch (DataType)
             {
-                case MasterDataType.Phase:
+                case GlobalFunction.MasterDataType.Phase:
+
+                    if(!(model.PhaseName.Contains("Phase"))){
+                        GF.ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Phase name must contain the string - 'Phase'", Duration = 40000 });
+                        return; 
+                    }
+
                     await MDPS.CreatePhaseAsync(model.PhaseName, model.PotNumber);
                     break;
 
-                case MasterDataType.Brand:
+                case GlobalFunction.MasterDataType.Brand:
                     await MDPS.CreateBrandAsync(model.BrandName);
                     break;
 
-                case MasterDataType.Plate:
+                case GlobalFunction.MasterDataType.Plate:
                     await MDPS.CreatePlateAsync(model.PlateName, model.SelectedBrandId, model.SelectedPhaseId, model.InstallDate);
                     break;
 
-                case MasterDataType.Pot:
-                    await MDPS.CreatePotAsync(model.PotName, model.SelectedPressId, model.SelectedPlateId);
+                case GlobalFunction.MasterDataType.Pot:
+                    await MDPS.CreatePotAsync(model.PotName, model.SelectedPressId);
                     break;
 
-                case MasterDataType.Press:
-                    Debug.WriteLine("This is the phase id");
-                    Debug.WriteLine(model.SelectedPhaseId);
+                case GlobalFunction.MasterDataType.Press:
+                    if (!(model.PressName.Contains("Press")))
+                    {
+                        GF.ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Press name must contain the string - 'Press'", Duration = 40000 });
+                        return;
+                    }
                     await MDPS.CreatePressAsync(model.PressName, model.SelectedPhaseId);
+                    break;
+                case GlobalFunction.MasterDataType.User:
+                    if (password != confirmPassword)
+                    {
+                        GF.ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Password is not the same as confirm password.", Duration = 40000 });
+                        return;
+                    }
+
+                    await MDPS.insertUserDataIntoDatabase(addedName, selectedRole, password);
                     break;
             }
 

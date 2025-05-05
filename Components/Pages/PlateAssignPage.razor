@@ -1,4 +1,8 @@
-﻿@page "/plate-assign"
+﻿@attribute [Authorize(Roles = "Admin, Production Admin, Production User")]
+
+@page "/plate-assign"
+
+<title>Plate Assign</title>
 
 @inject GlobalFunction GF
 @inject PlateAssignService PAS
@@ -24,7 +28,7 @@
             <div class="row">
                 <div class="col-12">
                     <RadzenLabel Text="Pot Name" />
-                    <RadzenDropDown @bind-Value="selectedPot" Data="@pots" TextProperty="PotName" ValueProperty="Id" Change="@OnPotChange" Style="width: 100%;" />
+                    <RadzenDropDown @bind-Value="selectedPot" Data="@pots" TextProperty="PotName" ValueProperty="Id" Change="@OnPotChange" Style="width: 100%;" AllowFiltering="true"/>
                 </div>
             </div>
             <div class="row">
@@ -34,31 +38,45 @@
                 </div>
             </div>
 
-            @if (selectedAction == "Switching" && selectedPlate != null){
+            @if ((selectedAction == "Switching" || selectedAction == "Remove") && selectedPlate != null)
+            {
                 <div class="row">
                     <div class="col-12">
                         <RadzenLabel Text="Current Plate Name" />
                         <RadzenLabel Text="@selectedPlate.PlateName" Style="font-weight: bold;" />
                     </div>
                 </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <RadzenLabel Text="Switching Date/Remove Date" />
+                        <RadzenDatePicker @bind-Value="installDateTime" Style="width: 100%;" />
+                    </div>
+                </div>
             }
-            
+
         </RadzenFieldset>
 
-       
-            @if (selectedAction == "Install")
-            {
-                <RadzenFieldset Text="Details">
+
+        @if (selectedAction == "Install")
+        {
+            <RadzenFieldset Text="Details">
                 <div class="row">
                     <div class="col-12">
                         <RadzenLabel Text="Plate Name" />
-                        <RadzenDropDown @bind-Value="selectedPlate" Data="@platesList" TextProperty="PlateName" Style="width: 100%;" />
+                        <RadzenDropDown @bind-Value="selectedPlate" Data="@(platesList.Where(p => p.PhaseType == selectedPhase))" TextProperty="PlateName" Style="width: 100%;" AllowFiltering="true" />
                     </div>
                 </div>
-                 </RadzenFieldset>
-            }
-            else if (selectedAction == "Switching" && selectedPlate != null)
-            {
+                <div class="row">
+                    <div class="col-12">
+                        <RadzenLabel Text="Installation Date" />
+                        <RadzenDatePicker @bind-Value="installDateTime"  Style="width: 100%;"  />
+                    </div>
+                </div>
+            </RadzenFieldset>
+        }
+        else if ((selectedAction == "Switching") && selectedPlate != null)
+        {
             <RadzenFieldset Text="Details">
                 <div class="row">
                     <div class="col-12">
@@ -97,8 +115,8 @@
                     </div>
                 </div>
             </RadzenFieldset>
-            }
-        
+        }
+
 
         <div class="row" style="margin-top: 10px;">
             <div class="col-12">
@@ -128,6 +146,8 @@
     private int switchPhase;
     private int switchPress; 
     private int switchPot;
+
+	private DateTime installDateTime = DateTime.Now;
 
     private Plate selectedPlate;
     private Plate selectedSwitchPlate;
@@ -209,6 +229,7 @@
                 else
                 {
                     actions.Add("Switching");
+                    actions.Add("Remove");
                 }
             }
         }
@@ -220,10 +241,10 @@
         {
             platesList = await GF.getPlatesInInventory();
         }
-        else if(selectedAction == "Switching")
+        else if(selectedAction == "Switching" || selectedAction == "Remove")
         {
             selectedPlate = await GF.getPlateInPot(selectedPot);
-            Debug.WriteLine("selectedPot: " + selectedPot);
+          
         }
     }
 
@@ -233,7 +254,7 @@
         {
             try
             {
-                await PAS.assignPlateToPot(selectedPot, selectedPlate.Id);
+                await PAS.assignPlateToPot(selectedPot, selectedPlate.Id, installDateTime);
                 NotificationService.Notify(NotificationSeverity.Success, "Success", "Plate assigned successfully!");
             }
             catch (Exception ex)
@@ -252,13 +273,24 @@
                 }
 
                 // Switch the plates between pots
-                await PAS.switchPlateBetweenPots(selectedPot, switchPot);
+                await PAS.switchPlateBetweenPots(selectedPot, switchPot, installDateTime);
                 NotificationService.Notify(NotificationSeverity.Success, "Success", "Plates switched successfully!");
             }
             catch (Exception ex)
             {
                 NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to switch plates: {ex.Message}");
             }
+        }
+        else if(selectedAction == "Remove"){
+            // try
+            // {
+                await PAS.removePlateFromPot(selectedPot, selectedPlate.Id, installDateTime);
+                NotificationService.Notify(NotificationSeverity.Success, "Success", "Plate removed successfully!");
+            // }
+            // catch (Exception ex)
+            // {
+            //     NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to assign plate: {ex.Message}");
+            // }
         }
     }
 }

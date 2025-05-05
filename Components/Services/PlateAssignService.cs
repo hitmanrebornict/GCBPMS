@@ -7,10 +7,12 @@ namespace GCBPMS.Components.Services
     public class PlateAssignService
     {
         private PmsContext _dbContext;
+        private GlobalFunction GF;
 
-        public PlateAssignService(PmsContext dbContext)
+        public PlateAssignService(PmsContext dbContext, GlobalFunction gf)
         {
             _dbContext = dbContext;
+            GF = gf;
         }   
 
         public async Task<List<Press>> getActivePressesJoinPhase(){
@@ -23,17 +25,68 @@ namespace GCBPMS.Components.Services
             .Where(p => p.Active == true && p.Pots.Any(p => p.Id == potId)).FirstOrDefaultAsync();
         }
 
-        public async Task assignPlateToPot(int potId, int plateId){
+        public async Task assignPlateToPot(int potId, int plateId, DateTime InstallDateTime){
             var pot = await _dbContext.Pots.FindAsync(potId);
             var plate = await _dbContext.Plates.FindAsync(plateId);
             pot.PlateId = plateId;
-            pot.InstallDatetime = DateTime.Now;
+            pot.InstallDatetime = InstallDateTime;
             plate.PlateStatus = "Used";
+
+            var newUserAction = new UserAction()
+            {
+                Username = await GF.getUsernameString(),
+                ActionDatetime = DateTime.Now,
+                PlateId = plateId,
+                Action = 1 //Assign
+            };
+            await _dbContext.UserActions.AddAsync(newUserAction);
             await _dbContext.SaveChangesAsync();
         }
 
-        public async Task switchPlateBetweenPots(int potId, int switchPotId)
+        public async Task removePlateFromPot(int potId, int plateId, DateTime RemoveDateTime)
         {
+            var currentTime = RemoveDateTime;
+            var phuInstallDatetime = new DateTime();
+			var pot = await _dbContext.Pots.FindAsync(potId);
+			var plate = await _dbContext.Plates.FindAsync(plateId);
+            if(pot.InstallDatetime != null)
+            {
+				phuInstallDatetime = pot.InstallDatetime.Value;
+			}
+            else
+            {
+                phuInstallDatetime = currentTime;
+            }
+            
+			var newPlateHistoryUsage = new PlateHistoryUsage
+			{
+				PlateId = plate.Id,
+				PotId = potId,
+				RemoveDateTime = currentTime,
+				InstallDateTime = phuInstallDatetime,
+				ChangeReason = "Remove"
+			};
+
+			await _dbContext.PlateHistoryUsages.AddAsync(newPlateHistoryUsage);
+
+			var newUserAction = new UserAction()
+			{
+				Username = await GF.getUsernameString(),
+				ActionDatetime = DateTime.Now,
+				PlateId = plateId,
+				Action = 7 //Remove
+			};
+			await _dbContext.UserActions.AddAsync(newUserAction);
+
+			pot.PlateId = null;
+            pot.InstallDatetime = null;
+            plate.PlateStatus = "Inventory";
+			await _dbContext.SaveChangesAsync();
+		}
+
+        public async Task switchPlateBetweenPots(int potId, int switchPotId, DateTime curRemoveDateTime)
+        {
+          
             var pots = await _dbContext.Pots
                 .Where(p => p.Id == potId || p.Id == switchPotId)
                 .ToListAsync();
@@ -52,26 +105,38 @@ namespace GCBPMS.Components.Services
                 {
                     PlateId = pot.PlateId.Value,
                     PotId = potId,
-                    RemoveDateTime = DateTime.Now,
+                    RemoveDateTime = curRemoveDateTime,
                     InstallDateTime  = pot.InstallDatetime.Value,
+                    ChangeReason = "Swtich"
                 },
                 new PlateHistoryUsage
                 {
                     PlateId = switchPot.PlateId.Value,
                     PotId = switchPotId,
-                    RemoveDateTime = DateTime.Now,
+                    RemoveDateTime = curRemoveDateTime,
                     InstallDateTime = switchPot.InstallDatetime.Value,
-                }
+					ChangeReason = "Swtich"
+				}
             };
 
             _dbContext.PlateHistoryUsages.AddRange(plateUsageHistories);
 
-            var tempPlateId = pot.PlateId;
+			var newUserAction = new UserAction()
+			{
+				Username = await GF.getUsernameString(),
+				ActionDatetime = DateTime.Now,
+				PlateId = pot.PlateId.Value,
+				Action = 2 //Switch
+			};
+
+			await _dbContext.UserActions.AddAsync(newUserAction);
+
+			var tempPlateId = pot.PlateId;
             pot.PlateId = switchPot.PlateId;
-            pot.InstallDatetime = DateTime.Now;
+            pot.InstallDatetime = curRemoveDateTime;
 
             switchPot.PlateId = tempPlateId;
-            switchPot.InstallDatetime = DateTime.Now;
+            switchPot.InstallDatetime = curRemoveDateTime;
 
             await _dbContext.SaveChangesAsync();
         }

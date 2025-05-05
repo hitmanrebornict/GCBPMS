@@ -12,6 +12,8 @@ namespace GCBPMS.Components.Services
         {
             _dbContext = dbContext;
         }
+        
+        
 
         public async Task<List<Plate>> getPlateList()
         {
@@ -19,9 +21,21 @@ namespace GCBPMS.Components.Services
                 .Include(p => p.Pots)
                     .ThenInclude(p => p.Press)
                     .ThenInclude(p => p.Phase)
+                    .OrderBy(p => p.PlateName)
+                        .ThenBy(p => p.PlateStatus)
                 .Include(p => p.PlateBrandNavigation)
+                .Include(p => p.PhaseTypeNavigation)
                 .AsNoTracking()
                 .Where(p => p.Active == true).ToListAsync();
+        }
+
+        public async Task<(int, int, int)> getPlatePieChartData(List<Plate> plateList)
+        {
+            var usedPlateNumber = plateList.Count(p => p.PlateStatus == "Used");
+            var inventoryPlateNumber = plateList.Count(p => p.PlateStatus == "Inventory");
+            var reparingPlateNumber = plateList.Count(p => p.PlateStatus == "Repairing");
+
+            return (usedPlateNumber, inventoryPlateNumber, reparingPlateNumber);
         }
 
         public async Task<Plate> getPlateDetail(int id)

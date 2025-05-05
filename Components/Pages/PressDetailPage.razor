@@ -1,4 +1,8 @@
-﻿@page "/press-detail-page"
+﻿@attribute [Authorize]
+
+@page "/press-detail-page"
+
+<title>Press Detail</title>
 
 @inject GlobalFunction globalFunction
 @inject PressDetailPageServices PDPS
@@ -8,26 +12,60 @@
     <RadzenText TextStyle="TextStyle.DisplayH5">Press Detail</RadzenText>
     <hr />
 
-    <RadzenDropDown Data="@phases" TextProperty="PhaseName" @bind-Value="selectedPhase" Change="@loadPressDataByPhaseID" />
-    <RadzenDropDown Data="@presses" TextProperty="PressName" ValueProperty="Id" @bind-Value="pressID" Change="@loadPotsDataByPressID" />
+    <!-- Container for the Pie Charts -->
+        <RadzenCard>
+            <RadzenText TextStyle="TextStyle.DisplayH6">Pot Occupancy</RadzenText>
+            <RadzenChart>
+                <RadzenPieSeries TItem="pieChartItem" Title="Pot Occupancy" Data="@pieChartData" CategoryProperty="status" ValueProperty="number">
+                    <RadzenSeriesDataLabels Visible="true" />
+                </RadzenPieSeries>
+            </RadzenChart>
+            <RadzenButton Icon="add_circle" Text="Load Data" Style="margin-top:8px;" Click="@generateDownloadLink" />
+            <a class="radzen-button-style" href="@downloadPDFPath" download="TestReport.xlsx" style=" margin-right:8px; margin-left:8px;">Download</a>
+        </RadzenCard>
+    <hr />
+   
+ 
+    <RadzenCard Variant="Variant.Outlined" class="rz-my-4">
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+            <RadzenLabel Text="Phase" Component="caseSensitivity" />
+            <RadzenDropDown Data="@phases" TextProperty="PhaseName" @bind-Value="selectedPhase" Change="@loadPressDataByPhaseID" Placeholder="Select Phase" />
 
-    @if ((pots is null || pots.Count == 0) && pressID > 0)
-    {
-        <RadzenButton Text="Create New Pot" Click="() => createPots(selectedPhase)" />
-    }
+            <RadzenLabel Text="Press" Component="logicalOperator" class="rz-ms-6" />
+            <RadzenDropDown Data="@presses" TextProperty="PressName" ValueProperty="Id" @bind-Value="pressID" Change="@(async (args) => await loadPotsDataByPressID())" Placeholder="Select Press" />
+
+            @if ((selectedPot is null || selectedPot.Count == 0) && pressID > 0)
+            {
+
+                <RadzenButton Text="Create New Pot" Click="() => createPots(selectedPhase)" />
+
+            }
+        </RadzenStack>
+    </RadzenCard>
 
     @if (pressID > 0)
     {
-        <RadzenDataGrid ref="@potsGrid" Data="@pots" AllowFiltering="true" AllowSorting="true" TItem="Pot" RowDoubleClick="onRowDoubleClick" >
+        <RadzenDataGrid ref="@potsGrid" Data="@selectedPot" AllowFiltering="true" AllowSorting="true" TItem="Pot" 
+            RowDoubleClick="onRowDoubleClick" AllowColumnResize="true" Responsive="true" FilterMode="FilterMode.Simple">
             <Columns>
 
                 <RadzenDataGridColumn Property="PotName" Title="Pot Name" />
                 <RadzenDataGridColumn Property="Plate.PlateName" Title="Plate Name">
                     <Template>
-                        @(context.Plate?.PlateName ?? "Empty")
+                        @(context.Plate?.PlateName ?? "-")
                     </Template>
                 </RadzenDataGridColumn>
-
+                <RadzenDataGridColumn Property="Plate.PlateBrandNavigation.BrandName" Title="Plate Brand" >
+                    <Template>
+                        @(context.Plate?.PlateBrandNavigation?.BrandName ?? "-")
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn Title="Actions">
+                    <Template>
+                        <RadzenButton Text="View History" Icon="history" ButtonStyle="ButtonStyle.Secondary"
+                                      Click="() => onRowButtonClick(context)" />
+                    </Template>
+                </RadzenDataGridColumn>
             </Columns>
         </RadzenDataGrid>
     }
@@ -39,35 +77,113 @@
     private List<Press> presses = new List<Press>();
     private List<Phase> phases = new List<Phase>();
     private List<Pot> pots = new List<Pot>();
+    private List<Pot> selectedPot = new List<Pot>();
     private Phase selectedPhase;
     private int pressID = 0;
     private RadzenDataGrid<Pot> potsGrid = new RadzenDataGrid<Pot>();
+    private List<pieChartItem> pieChartData = new List<pieChartItem>();
+    private List<platePieChartItem> platePieChartData = new List<platePieChartItem>();
+    private string downloadPDFPath;
+
+    class pieChartItem
+    {
+        public string status { get; set; }
+        public int number { get; set; }
+    }
+
+    class platePieChartItem
+    {
+        public string plateStatus { get; set; }
+        public int number { get; set; }
+    }
+
+    private int occupiedNumber, emptyNumber = 0;
+    private int usedPlateNumber, inventoryPlateNumber, repairingPlateNumber = 0;
     protected override async Task OnInitializedAsync()
     {
         phases = await globalFunction.getActivePhase();
+        pots = await PDPS.getPotsListAsync();
+        (occupiedNumber, emptyNumber) = PDPS.getPotsUsageDataForPieChart(pots);
+
+
+        // Populate the pie chart data list
+        pieChartData = new List<pieChartItem>
+    {
+        new pieChartItem { status = "Occupied", number = occupiedNumber },
+        new pieChartItem { status = "Empty", number = emptyNumber }
+    };
+
+
+
     }
 
     private async Task loadPotsDataByPressID()
     {
+        
         if (pressID > 0)
         {
-            pots = await PDPS.getPotsByPressID(pressID);
+            // pots = await PDPS.getPotsByPressID(pressID);
+            selectedPot = pots
+                          .Where(p => p.PressId == pressID)
+                          .OrderBy(p => p.Id)
+                          .ToList();
+
+
         }
     }
 
     private async Task loadPressDataByPhaseID()
     {
         presses = await PDPS.getPressesByPhaseID(selectedPhase.Id);
-        pressID = 0;
-        pots.Clear();
-       
     }
 
     private async Task createPots(Phase selectedPhase){
-        await PDPS.CreatePotsAsync(selectedPhase, pressID);
+        try{
+            await PDPS.CreatePotsAsync(selectedPhase, pressID);
+            GF.ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Pots created successfully.", Duration = 40000 });
+            await InvokeAsync(StateHasChanged);
+            pots = await PDPS.getPotsListAsync();
+        }
+        catch(Exception ex){
+            GF.ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = ex.ToString(), Duration = 40000 });
+
+        }
+        
     }
 
-    private async Task onRowDoubleClick(DataGridRowMouseEventArgs<Pot> args){
-        await DialogService.OpenAsync<PotUsageHistoryDialog>("Pot Usage History", new Dictionary<string, object> { ["selectedPot"] = args.Data });
+    private async Task onRowDoubleClick(DataGridRowMouseEventArgs<Pot> args)
+    {
+        var dialogOptions = new DialogOptions
+            {
+                Width = "80vw",  // Set width to 80% of viewport width
+                Height = "auto",  // Set height to auto so it adapts to content
+
+            };
+
+        await DialogService.OpenAsync<PotUsageHistoryDialog>(
+            "Pot Usage History",
+            new Dictionary<string, object> { ["selectedPot"] = args.Data },
+            dialogOptions
+        );
+    }
+
+    private async Task onRowButtonClick(Pot selectedPotData)
+    {
+        var dialogOptions = new DialogOptions
+            {
+                Width = "80vw",  // Set width to 80% of viewport width
+                Height = "auto", // Set height to auto so it adapts to content
+            };
+
+        await DialogService.OpenAsync<PotUsageHistoryDialog>(
+            "Pot Usage History",
+            new Dictionary<string, object> { ["selectedPot"] = selectedPotData },
+            dialogOptions
+        );
+    }
+
+    private void generateDownloadLink()
+    {
+        downloadPDFPath = PDPS.exportToExcel(pots);
     }
 }

@@ -1,8 +1,10 @@
 ﻿@inject PressDetailPageServices PDPS
 
-<RadzenDataGrid Data="@potUsageHistoryList" TItem="PlateHistoryUsage">
+<RadzenDataGrid Data="@potUsageHistoryList" TItem="PlateHistoryUsage" AllowColumnResize="true" AllowFiltering="true" FilterMode="FilterMode.Simple"
+                Responsive="true">
     <Columns>
         <RadzenDataGridColumn Property="Plate.PlateName" Title="Plate Name" />
+        <RadzenDataGridColumn Property="Plate.PlateBrandNavigation.BrandName" Title="Plate Brand" />
         <RadzenDataGridColumn Property="InstallDateTime" Title="Install Datetime">
             <Template Context="data">
                 @(data.InstallDateTime.ToString("dd/MM/yyyy hh:mm tt"))
@@ -23,6 +25,7 @@
                 }
             </Template>
         </RadzenDataGridColumn>
+        <RadzenDataGridColumn Property="ChangeReason" Title="Change Reason" />
     </Columns>
 </RadzenDataGrid>
 

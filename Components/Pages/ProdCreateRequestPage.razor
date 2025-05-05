@@ -1,4 +1,8 @@
-﻿@page "/prod-create-request"
+﻿@attribute [Authorize(Roles = "Admin, Production Admin, Production User")]
+
+@page "/prod-create-request"
+
+<title>Create Request</title>
 
 @inject GlobalFunction GF
 @inject NotificationService NotificationService
@@ -52,7 +56,7 @@
                                 <RadzenDropDown @bind-Value="selectedPot" 
                                               Data="@activePots.Where(p => p.PlateId != null)" 
                                               TextProperty="PotName" 
-                                              ValueProperty="Id" 
+                                              
                                               Change="@OnPotChange" 
                                               Style="width: 100%;" />
                             </div>
@@ -110,7 +114,7 @@
 
     private int? selectedPhase { get; set; }
     private int? selectedPress { get; set; }
-    private int? selectedPot { get; set; }
+    private Pot selectedPot { get; set; }
 
     private Request selectedRequest = new Request();
     private Plate selectedPlate = new Plate(); 
@@ -152,7 +156,7 @@
 
     private async Task OnPotChange(object value)
     {
-       selectedPlate = await GF.getPlateInPot(selectedPot.Value);
+        selectedPlate = selectedPot.Plate;
     }
 
     private async Task OnSubmit()
@@ -180,13 +184,13 @@
                 return;
             }
 
-            if (!selectedPot.HasValue)
+            if (selectedPot is null)
             {
                 NotificationService.Notify(NotificationSeverity.Error, "Error", "Please select a pot");
                 return;
             }
 
-            await PCPPS.createMachineRequest(selectedPot.Value, selectedRepairType, repairRemark, selectedPlate);
+            await PCPPS.createMachineRequest(selectedPot, selectedRepairType, repairRemark, selectedPlate);
             NotificationService.Notify(NotificationSeverity.Success, "Success", "Repair request created successfully!");
         }
         else

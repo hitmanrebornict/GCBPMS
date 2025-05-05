@@ -6,10 +6,12 @@ namespace GCBPMS.Components.Services
     public class ProdCreateRequestPageServices
     {
         private PmsContext _dbContext;
+        private GlobalFunction GF;
 
-        public ProdCreateRequestPageServices(PmsContext dbContext)
+        public ProdCreateRequestPageServices(PmsContext dbContext, GlobalFunction gf)
         {
             _dbContext = dbContext;
+            GF = gf;
         }
     
         public async Task createInventoryRepairRequest(string repairReason, string repairRemark, Plate selectedPlate)
@@ -19,59 +21,81 @@ namespace GCBPMS.Components.Services
             selectedPlate.PlateStatus = "Repairing"; 
             _dbContext.Plates.Update(selectedPlate);
 
-            var request = new Request
+			var newUserAction = new UserAction()
+			{
+				Username = await GF.getUsernameString(),
+				ActionDatetime = DateTime.Now,
+				PlateId = selectedPlate.Id,
+				Action = 3 //Request
+			};
+			await _dbContext.UserActions.AddAsync(newUserAction);
+
+			var request = new Request
             {
                 PlateId = selectedPlate.Id,
                 RequestDatetime = currentTime,
                 RepairReason = repairReason,
                 RepairRemark = repairRemark,
-            };
+				Requestor = await GF.getUsernameString()
+			};
 
             // Batch the operations together
             await _dbContext.Requests.AddAsync(request);
             await _dbContext.SaveChangesAsync();
         }
 
-        public async Task createMachineRequest(int selectedPot, string repairReason, string repairRemark, Plate selectedPlate)
+        public async Task createMachineRequest(Pot selectedPot, string repairReason, string repairRemark, Plate selectedPlate)
         {
             var currentTime = DateTime.Now;
 
-            // Get pot in a single query with tracking
-            var pot = await _dbContext.Pots
-                .Where(p => p.Id == selectedPot)
-                .FirstAsync();
+            var changeReasonString = $"Repair - {repairReason}";
+            var newPlateHistoryUsage = new PlateHistoryUsage
+            {
+                PlateId = selectedPlate.Id,
+                PotId = selectedPot.Id,
+                InstallDateTime = selectedPot.InstallDatetime.Value,
+                RemoveDateTime = currentTime,
+                ChangeReason = changeReasonString,
+            };
 
             // Prepare all entities for a single SaveChanges call
             selectedPlate.PlateStatus = "Repairing";
             _dbContext.Plates.Update(selectedPlate);
 
-            var newPlateHistoryUsage = new PlateHistoryUsage
-            {
-                PlateId = selectedPlate.Id,
-                PotId = pot.Id,
-                InstallDateTime = pot.InstallDatetime.Value,
-                RemoveDateTime = currentTime
-            };
-
             // Add and save plate history usage first to get its ID
             await _dbContext.PlateHistoryUsages.AddAsync(newPlateHistoryUsage);
-            await _dbContext.SaveChangesAsync();
 
-            var request = new Request
+			var newUserAction = new UserAction()
+			{
+				Username = await GF.getUsernameString(),
+				ActionDatetime = DateTime.Now,
+				PlateId = selectedPlate.Id,
+				Action = 3 //Request
+			};
+			await _dbContext.UserActions.AddAsync(newUserAction);
+
+			var request = new Request
             {
                 PlateId = selectedPlate.Id,
                 RequestDatetime = currentTime,
                 RepairReason = repairReason,
                 RepairRemark = repairRemark,
-                PlateHistoryUsageId = newPlateHistoryUsage.Id // Add the generated ID
+                PlateHistoryUsage = newPlateHistoryUsage, // Add the generated ID
+                Requestor = await GF.getUsernameString()
             };
 
+            await _dbContext.Requests.AddAsync(request);
+
             // Update pot
-            pot.InstallDatetime = null;
-            pot.PlateId = null;
+            selectedPot.InstallDatetime = null;
+            selectedPot.PlateId = null;
+     
+            _dbContext.Pots.Update(selectedPot);
+
+           
 
             // Add request and save remaining changes
-            await _dbContext.Requests.AddAsync(request);
+            
             await _dbContext.SaveChangesAsync();
         }
     }

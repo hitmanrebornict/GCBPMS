@@ -1,112 +1,278 @@
-﻿@page "/mt-fill-result/{id:int}/{plateName}"
+﻿@attribute [Authorize(Roles = "Admin, Maintenance Admin, Maintenance User")]
+
+@page "/mt-fill-result/{id:int}/{plateName}/{plateBrand}"
+
+<title>Fill Result</title>
 
 @inject MaintenanceRequestServices MRS
 
 <RadzenCard>
-    <RadzenText TextStyle="TextStyle.DisplayH5">Fill Repair Result</RadzenText>
-    <hr/>
+	<RadzenText TextStyle="TextStyle.DisplayH5">Fill Repair Result</RadzenText>
+	<hr />
 
-    <RadzenText Text="@plateName" />
+	<div class="plate-details">
+		<!-- Plate Name -->
+		<RadzenLabel Text="Plate Name:" class="section-title" />
+		<RadzenLabel Text="@plateName" class="section-title" />
+		<br />
+		<RadzenLabel Text="Plate Brand:" class="section-title" />
+		<RadzenLabel Text="@plateBrand" class="section-title" />
+		<br />
+		<RadzenLabel Text="Requestor:" class="section-title" />
+		<RadzenLabel Text="@requestor" class="section-title" />
 
-    @if(selectedRepair.RepairType == "In-house" ){
-        <RadzenLabel Text="In-house" />
-        <RadzenLabel Text="@selectedRepair.TechnicianName" />
+		@if (selectedRepair.RepairType == "In-house")
+		{
+			<!-- In-House Repair Details -->
+			<div class="repair-details in-house-repair">
+				<RadzenLabel Text="Repair Detail" class="section-title" />
+				<hr />
+				<RadzenLabel Text="Repair Type:" class="field-label" />
+				<RadzenLabel Text="In-house" class="field-value" />
 
-        <RadzenLabel Text="Accept Datetime" />
-        <RadzenLabel Text="@selectedRepair.StartDatetime.ToString("dd/MM/yyyy hh:mm tt")" />
+				<RadzenLabel Text="Technician name:" class="field-label" />
+				<RadzenLabel Text="@selectedRepair.TechnicianName" class="field-value" />
 
-        <RadzenTextArea Placeholder="Repair Remark" @bind-Value="@selectedRepair.RepairRemark"></RadzenTextArea>
+				<RadzenLabel Text="Accept Datetime" class="field-label" />
+				<RadzenLabel Text="@selectedRepair.StartDatetime.ToString("dd/MM/yyyy hh:mm tt")" class="field-value" />
 
-        <RadzenButton Text="Complete" Click="@completeTechnicianRepair" />
-    }
-    else if (selectedRepair.RepairType == "Supplier")
-    {
-        <RadzenLabel Text="Supplier Name:" />
-        <RadzenLabel Text="@(selectedRepair.SupplierDetails.SupplierName)"  />
 
-        <RadzenLabel Text="Accept Datetime" />
-        <RadzenLabel Text="@selectedRepair.StartDatetime.ToString("dd/MM/yyyy hh:mm tt")" />
+				@if (selectedRepair.RepairStatus != "Completed")
+				{
+					<RadzenLabel Text="Repair remark:" class="field-label" />
+					<RadzenTextArea Placeholder="Repair remark" @bind-Value="@selectedRepair.RepairRemark" class="text-area" />
+					<RadzenButton Text="Complete" Click="@completeTechnicianRepair" class="button" />
+				}
+				else
+				{
+					<RadzenLabel Text="Finish Datetime" class="field-label" />
+					<RadzenLabel Text="@(selectedRepair.FinishDatetime.Value.ToString("dd/MM/yyyy hh:mm tt") ?? "N/A")" class="field-value" />
 
-        <RadzenLabel Text="Estimate Complete Datetime" />
-        <RadzenLabel Text="@selectedRepair.SupplierDetails.Eta.Value.ToString("dd/MM/yyyy")" />
+					<RadzenLabel Text="Repair remark:" class="field-label" />
+					<RadzenLabel Text="@(selectedRepair.RepairRemark ?? "N/A")" class="field-value" />
+				}
 
-        <RadzenTextArea Placeholder="Repair Remark" @bind-Value="@selectedRepair.RepairRemark"></RadzenTextArea>
+			</div>
+		}
+		else if (selectedRepair.RepairType == "Supplier")
+		{
+			<!-- Supplier Repair Details -->
+			<div class="repair-details supplier-repair">
+				<RadzenLabel Text="Repair Detail" class="section-title" />
+				<hr />
 
-        <RadzenButton Text="Complete" Click="@completeSupplierRepair" />
+				<RadzenLabel Text="Repair Type:" class="field-label" />
+				<RadzenLabel Text="Supplier" class="field-value" />
 
-        @if(selectedRepair.RepairStatus == "Cost-Record"){
-            <RadzenLabel Text="Cost Name" />
-            <RadzenTextBox @bind-value="@selectedRepairCost.CostName" Placeholder="Please enter cost name." />
+				<RadzenLabel Text="Supplier Name:" class="field-label" />
+				<RadzenLabel Text="@(selectedRepair.SupplierDetails.SupplierName)" class="field-value" />
 
-            <RadzenLabel Text="Cost Amount" />
-            <RadzenNumeric TValue="Decimal" @bind-value="@selectedRepairCost.Cost" Placeholder="Please enter cost amount." />
+				<RadzenLabel Text="Accept Datetime:" class="field-label" />
+				<RadzenLabel Text="@selectedRepair.StartDatetime.ToString("dd/MM/yyyy hh:mm tt")" class="field-value" />
 
-            <RadzenLabel Text="Cost Remark" />
-            <RadzenTextArea @bind-value="@selectedRepairCost.CostRemark" Placeholder="Please enter cost remark." />
+				<RadzenLabel Text="Estimate Complete Datetime:" class="field-label" />
+				<RadzenLabel Text="@selectedRepair.SupplierDetails.Eta.Value.ToString("dd/MM/yyyy")" class="field-value" />
 
-            <RadzenButton Text="Record Cost" Click="@recordCost" />
-            <RadzenButton Text="Complete" Click="@completeRecordCost" /> 
-        }
-    }
+				@if (selectedRepair.RepairStatus == "Repairing")
+				{
+					<RadzenLabel Text="Repair remark:" class="field-label" />
+					<RadzenTextArea Placeholder="Repair remark" @bind-Value="@selectedRepair.RepairRemark" class="text-area" />
+					<RadzenButton Text="Complete" Click="@completeSupplierRepair" class="button" />
+				}
+				else
+				{
+					<RadzenLabel Text="Finish Datetime" class="field-label" />
+					<RadzenLabel Text="@(selectedRepair.FinishDatetime.Value.ToString("dd/MM/yyyy hh:mm tt") ?? "N/A")" class="field-value" />
 
+					<RadzenLabel Text="Repair remark:" class="field-label" />
+					<RadzenLabel Text="@(selectedRepair.RepairRemark ?? "N/A")" class="field-value" />
+				}
+			</div>
+			<div class="repair-details supplier-repair">
+				<!-- Conditional Cost Record Section -->
+				<RadzenLabel Text="Cost Detail" class="section-title" />
+				<hr />
+				@if (selectedRepair.RepairStatus == "Cost-Record")
+				{
+					<div class="cost-record-section">
+						<RadzenTemplateForm TItem="RepairCost" Submit="@recordCost" Data="selectedRepairCost">
+							<RadzenLabel Text="Cost Name" class="field-label" />
+							<RadzenTextBox Name="costName" @bind-value="@selectedRepairCost.CostName" Placeholder="Please enter cost name." class="text-box" />
+							<RadzenRequiredValidator Component="costName" Text="Cost name is required" Style="width: 100%;"></RadzenRequiredValidator>
+
+							<RadzenLabel Text="Cost Amount" class="field-label" />
+							<RadzenNumeric Name="costAmount" TValue="Decimal" @bind-value="@selectedRepairCost.Cost" Placeholder="Please enter cost amount." class="numeric-box" />
+							<RadzenRequiredValidator Component="costAmount" Text="Cost Amount is required" Style="width: 100%;"></RadzenRequiredValidator>
+
+
+							<RadzenLabel Text="Cost Remark" class="field-label" />
+							<RadzenTextArea @bind-value="@selectedRepairCost.CostRemark" Placeholder="Please enter cost remark." class="text-area" />
+
+							<!-- Record Cost and Complete Buttons -->
+							<div class="cost-buttons">
+								<RadzenButton Text="Record Cost" ButtonType="ButtonType.Submit" class="button" />
+								<RadzenButton Text="Complete" Click="@completeRecordCost" class="button" />
+							</div>
+						</RadzenTemplateForm>
+					</div>
+				}
+
+				@if (selectedRepair.RepairCosts != null && selectedRepair.RepairCosts.Count > 0)
+				{
+						<hr/>
+					<RadzenDataGrid TItem="RepairCost" Data=@selectedRepair.RepairCosts AllowFiltering=true FilterMode="FilterMode.CheckBoxList" AllowSorting=true Responsive="true">
+							<Columns>
+							<RadzenDataGridColumn TItem="RepairCost" Property="CostName" Title="Cost Name" />
+							@* <RadzenDataGridColumn TItem="RepairCost" Property="Plate.PlateBrandNavigation.BrandName" Title="Plate Brand" />
+								<RadzenDataGridColumn TItem="Request" Property="RequestDatetime" Title="Request Date">
+									<Template Context="request">
+										@request.RequestDatetime.ToString("dd/MM/yyyy hh:mm tt")
+									</Template>
+								</RadzenDataGridColumn> *@
+							<RadzenDataGridColumn TItem="RepairCost" Property="Cost" Title="Cost" >
+									<Template Context="cost">
+										INR @cost.Cost
+									</Template>
+								</RadzenDataGridColumn> 
+							<RadzenDataGridColumn TItem="RepairCost" Property="CostRemark" Title="Cost Remark" >
+								<Template Context="cost">
+									@(cost.CostRemark ?? "N/A")
+								</Template>
+							</RadzenDataGridColumn>
+						</Columns>
+						</RadzenDataGrid>
+				
+				}
+			</div>
+		}
+	</div>
 </RadzenCard>
 
+<style>
+	/* Consistent base margin for all sections */
+	.plate-details {
+		padding: 15px;
+	}
+
+	/* Consistent spacing for each section */
+	.section-title {
+		font-weight: bold;
+		font-size: 1.2em;
+	}
+
+	/* Styling for repair details and cost record sections */
+	.repair-details,
+	.cost-record-section {
+		border: 1px solid #ccc;
+		border-radius: 5px;
+		padding: 15px;
+		margin-top: 15px;
+	}
+
+	/* Field label and value styling with uniform margin */
+	.field-label, .field-value {
+		display: block;
+		margin-bottom: 10px;
+	}
+
+	.field-label {
+		font-weight: bold;
+	}
+
+	/* Input fields with consistent spacing */
+	.text-box, .numeric-box, .text-area {
+		width: 100%;
+		margin-bottom: 15px;
+	}
+
+	/* Button styling with consistent margin */
+	.button {
+		margin-right: 10px;
+		margin-top: 10px;
+	}
+
+	/* Flexbox for cost buttons section */
+	.cost-buttons {
+		display: flex;
+		justify-content: flex-start;
+		margin-top: 15px;
+	}
+</style>
 
 @code {
-    [Parameter]
-    public int Id { get; set; }
+	[Parameter]
+	public int Id { get; set; }
 
-    [Parameter]
-    public string plateName { get; set; }
+	[Parameter]
+	public string plateName { get; set; }
 
-    private Repair selectedRepair = new Repair();
-    private RepairCost selectedRepairCost = new RepairCost();
+	[Parameter]
+	public string plateBrand { get; set; }
 
-    protected override async Task OnInitializedAsync()
-    {
-        selectedRepair = await MRS.getRepairById(Id);
-        await base.OnInitializedAsync();
-    }
+	private string requestor;
+	private Repair selectedRepair = new Repair();
+	private RepairCost selectedRepairCost = new RepairCost();
 
-    private async Task completeTechnicianRepair(){
-        try{
-            await MRS.updateTechnicianRepair(selectedRepair);
-            NotificationService.Notify(NotificationSeverity.Success, "Repair Completed", "Repair has been completed successfully");
-        }
-        catch(Exception ex){
-            NotificationService.Notify(NotificationSeverity.Error, "Error", ex.Message);
-        }
-    }
+	protected override async Task OnInitializedAsync()
+	{
+		selectedRepair = await MRS.getRepairById(Id);
+		requestor = selectedRepair.Request.Requestor;
+		await base.OnInitializedAsync();
+	}
 
-    private async Task completeSupplierRepair(){
-        try{
-            await MRS.updateSupplierRepair(selectedRepair);
-            NotificationService.Notify(NotificationSeverity.Success, "Repair Completed", "Repair has been completed successfully");
-        }
-        catch(Exception ex){
-            NotificationService.Notify(NotificationSeverity.Error, "Error", ex.Message);
-        }
-    }   
+	private async Task completeTechnicianRepair()
+	{
+		try
+		{
+			await MRS.updateTechnicianRepair(selectedRepair);
+			NotificationService.Notify(NotificationSeverity.Success, "Repair Completed", "Repair has been completed successfully");
+			NavigationManager.NavigateTo("/mt-repair-list");
+		}
+		catch (Exception ex)
+		{
+			NotificationService.Notify(NotificationSeverity.Error, "Error", ex.Message);
+		}
+	}
 
-    private async Task recordCost(){
-        try{
-            await MRS.recordCost(selectedRepair, selectedRepairCost);
-            NotificationService.Notify(NotificationSeverity.Success, "Cost Recorded", "Cost has been recorded successfully");
-        }
-        catch(Exception ex){
-            NotificationService.Notify(NotificationSeverity.Error, "Error", ex.Message);
-        }
-    }
+	private async Task completeSupplierRepair()
+	{
+		try
+		{
+			await MRS.updateSupplierRepair(selectedRepair);
+			NotificationService.Notify(NotificationSeverity.Success, "Repair Completed", "Repair has been completed successfully");
+		}
+		catch (Exception ex)
+		{
+			NotificationService.Notify(NotificationSeverity.Error, "Error", ex.Message);
+		}
+	}
 
-    private async Task completeRecordCost(){
-        try{
-            await MRS.completeRecordCost(selectedRepair);
-            NotificationService.Notify(NotificationSeverity.Success, "Repair Completed", "Repair has been completed successfully");
-        }
-        catch(Exception ex){
-            NotificationService.Notify(NotificationSeverity.Error, "Error", ex.Message);
-        }
-    }
+	private async Task recordCost()
+	{
+		try
+		{
+			await MRS.recordCost(selectedRepair, selectedRepairCost);
+			NotificationService.Notify(NotificationSeverity.Success, "Cost Recorded", "Cost has been recorded successfully");
+		}
+		catch (Exception ex)
+		{
+			NotificationService.Notify(NotificationSeverity.Error, "Error", ex.Message);
+		}
+	}
+
+	private async Task completeRecordCost()
+	{
+		try
+		{
+			await MRS.completeRecordCost(selectedRepair);
+			NotificationService.Notify(NotificationSeverity.Success, "Repair Completed", "Repair has been completed successfully");
+			NavigationManager.NavigateTo("/mt-repair-list");
+		}
+		catch (Exception ex)
+		{
+			NotificationService.Notify(NotificationSeverity.Error, "Error", ex.Message);
+		}
+	}
 
 
 }

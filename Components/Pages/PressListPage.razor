@@ -1,11 +1,15 @@
+@attribute [Authorize]
+
 @page "/press-list"
+
+<title>Press List</title>
 
 @inject GlobalFunction GF
 @inject PlateAssignService PAS
 
 <h3>Plate Assign</h3>
 
-<RadzenDataGrid TItem="Press" Data="@presses" AllowFiltering="true" AllowSorting="true" SelectionMode="DataGridSelectionMode.Single" CellDoubleClick="onCellDoubleClick">
+<RadzenDataGrid TItem="Press" Data="@presses" AllowFiltering="true" AllowSorting="true" SelectionMode="DataGridSelectionMode.Single" CellDoubleClick="onCellDoubleClick" Responsive="true">
     <Columns>
         <RadzenDataGridColumn Property="Phase.PhaseName" Title="Phase Name" />
         <RadzenDataGridColumn Property="PressName" Title="Press Name" />
@@ -14,9 +18,6 @@
 
 @code {
     private List<Press> presses = new List<Press>();
-
-    [Inject]
-    private NavigationManager NavigationManager { get; set; }
 
     protected override async Task OnInitializedAsync(){
         presses = await PAS.getActivePressesJoinPhase();

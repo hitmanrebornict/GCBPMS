@@ -1,4 +1,8 @@
-﻿@page "/plate-list"
+﻿@attribute [Authorize]
+
+@page "/plate-list"
+
+<title>Plate List</title>
 
 @inject PlateDetailPageServices PDPS
 @inject NavigationManager NavigationManager
@@ -7,28 +11,61 @@
     <RadzenText TextStyle="TextStyle.DisplayH5">Plate List</RadzenText>
     <hr/>
 
-    <RadzenDataGrid TItem="Plate" Data=@plates AllowFiltering="true" AllowSorting="true" FilterMode="FilterMode.Simple" RowDoubleClick="OnRowDoubleClick">
+     <RadzenCard Style="margin-bottom:8px">
+                <RadzenText TextStyle="TextStyle.DisplayH6">Plate Status</RadzenText>
+                <RadzenChart>
+                    <RadzenPieSeries TItem="platePieChartItem" Title="Plate Status" Data="@platePieChartData" CategoryProperty="plateStatus" ValueProperty="number">
+                        <RadzenSeriesDataLabels Visible="true" />
+                    </RadzenPieSeries>
+                </RadzenChart>
+     </RadzenCard>
+
+    <RadzenDataGrid TItem="Plate" Data=@plates AllowFiltering="true" AllowSorting="true" FilterMode="FilterMode.CheckBoxList" RowDoubleClick="OnRowDoubleClick" AllowColumnResize="true" Responsive="true">
         <Columns>
             <RadzenDataGridColumn TItem="Plate" Property="PlateName" Title="Plate Name" />
-            <RadzenDataGridColumn TItem="Plate" Property="PlateStatus" Title="Plate Status" />
-            <RadzenDataGridColumn TItem="Plate" Title="Phase Name" Property="Pots[0].Press.Phase.PhaseName">
-                <Template Context="plate">
-                    @(plate.Pots.FirstOrDefault()?.Press?.Phase?.PhaseName ?? "N/A")
-                </Template>
-            </RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="Plate" Title="Press Name" Property="Pots[0].Press.PressName">
-                <Template Context="plate">
-                    @(plate.Pots.FirstOrDefault()?.Press?.PressName ?? "N/A")
-                </Template>
-            </RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="Plate" Title="Pot Name" Property="Pots[0].PotName">
-                <Template Context="plate">
-                    @(plate.Pots.FirstOrDefault()?.PotName ?? "N/A")
-                </Template>
-            </RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="Plate" Title="Brand Name" Property="PlateBrandNavigation.BrandName">
+            <RadzenDataGridColumn TItem="Plate" Title="Brand" Property="PlateBrandNavigation.BrandName">
                 <Template Context="plate">
                     @(plate.PlateBrandNavigation?.BrandName ?? "N/A")
+                </Template>
+            </RadzenDataGridColumn>
+            @* <RadzenDataGridColumn TItem="Plate" Property="PlateStatus" Title="Plate Status" /> *@
+            <RadzenDataGridColumn TItem="Plate" Property="PlateStatus" Title="Plate Status">
+                <Template Context="plate">
+                    @if (plate.PlateStatus == "Used")
+                    {
+                        <RadzenBadge Text="Used" Style="background-color: #4caf50; color: white;" />
+                    }
+                    else if (plate.PlateStatus == "Inventory")
+                    {
+                        <RadzenBadge Text="Inventory" Style="background-color: #2196f3; color: white;" />
+                    }
+                    else if (plate.PlateStatus == "Repairing")
+                    {
+                        <RadzenBadge Text="Repairing" Style="background-color: #f44336; color: white;" />
+                    }
+                    else
+                    {
+                        <RadzenBadge Text="Unknown" Style="background-color: gray; color: white;" />
+                    }
+                </Template>
+            </RadzenDataGridColumn>
+            @* <RadzenDataGridColumn TItem="Plate" property="PhaseName" Title="Phase Name">
+                <Template Context="plate">
+                    @(plate.Pots.FirstOrDefault()?.Press?.Phase?.PhaseName ?? "-")
+                </Template>
+            </RadzenDataGridColumn> *@
+
+            <RadzenDataGridColumn TItem="Plate" Property="PhaseTypeNavigation.PhaseName" Title="Phase Name" />
+
+            <RadzenDataGridColumn TItem="Plate"  Title="Pot Name" Filterable="false">
+                <Template Context="plate">
+                    @(plate.Pots.FirstOrDefault()?.PotName ?? "-")
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="Plate" Title="Actions" Filterable="false">
+                <Template Context="plate">
+                    <RadzenButton Text="View Details" Icon="visibility" ButtonStyle="ButtonStyle.Secondary"
+                    Click="() => OnRowButtonClick(plate)" />
                 </Template>
             </RadzenDataGridColumn>
         </Columns>
@@ -41,13 +78,43 @@
 @code {
     private List<Plate> plates = new List<Plate>();
 
+    private List<platePieChartItem> platePieChartData = new List<platePieChartItem>();
+
+
+
+    class platePieChartItem
+    {
+        public string plateStatus { get; set; }
+        public int number { get; set; }
+    }
+
+    private int usedPlateNumber, inventoryPlateNumber, repairingPlateNumber = 0;
+
     protected override async Task OnInitializedAsync()
     {
         plates = await PDPS.getPlateList();
+        (usedPlateNumber, inventoryPlateNumber, repairingPlateNumber) = await PDPS.getPlatePieChartData(plates);
+        platePieChartData = new List<platePieChartItem>
+        {
+            new platePieChartItem{plateStatus = "Used", number = usedPlateNumber},
+            new platePieChartItem{plateStatus = "Inventory", number = inventoryPlateNumber},
+            new platePieChartItem{plateStatus = "Repairing", number = repairingPlateNumber},
+
+
+        };
+        foreach(var plate in plates){
+            // plate.PhaseTypeNavigation.PhaseName;
+        }
     }  
 
     void OnRowDoubleClick(DataGridRowMouseEventArgs<Plate> args)
     {
         NavigationManager.NavigateTo($"plate-detail/{args.Data.Id}");
+    }
+
+    void OnRowButtonClick(Plate selectedPlate)
+    {
+        // Navigate to the plate detail page using the plate ID
+        NavigationManager.NavigateTo($"plate-detail/{selectedPlate.Id}");
     }
 }

@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Radzen;
 using GCBPMS.Areas.Identity.Data;
 using Microsoft.AspNetCore.Identity;
+using GCBPMS.Components.Pages;
 
 namespace GCBPMS
 {
@@ -20,10 +21,22 @@ namespace GCBPMS
             builder.Services.AddDbContext<GCBPMSIdentityDbContext>(options =>
                    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")), ServiceLifetime.Transient);
 
-            builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true).AddEntityFrameworkStores<GCBPMSIdentityDbContext>();
+            builder.Services.AddDefaultIdentity<IdentityUser>(options =>
+            {
+                options.SignIn.RequireConfirmedAccount = false; // Disable email confirmation
+                options.User.RequireUniqueEmail = false;        // No unique email required
+            })
+           .AddRoles<IdentityRole>()
+           .AddEntityFrameworkStores<GCBPMSIdentityDbContext>();
 
-			// Add services to the container.
-			builder.Services.AddRazorComponents()
+            builder.Services.ConfigureApplicationCookie(options =>
+            {
+                options.LoginPath = "/login"; // Redirect to this path when unauthorized
+                options.AccessDeniedPath = "/Identity/Account/AccessDenied"; // Optional: where to redirect if access is denied
+            });
+
+            // Add services to the container.
+            builder.Services.AddRazorComponents()
 				.AddInteractiveServerComponents();
 
 			builder.Services.AddScoped<GlobalFunction>();
@@ -35,6 +48,10 @@ namespace GCBPMS
             builder.Services.AddScoped<ProdCreateRequestPageServices>();
             builder.Services.AddScoped<MaintenanceRequestServices>();
 			builder.Services.AddScoped<NotificationService>();
+            builder.Services.AddHostedService<RoleSeederHostedService>();
+			builder.Services.AddScoped<PressDetailPage>();
+			builder.Services.AddScoped<ReportPageServices>();
+			builder.Services.AddScoped<MaintenanceDashboardServices>();
 
             var app = builder.Build();
 
@@ -46,7 +63,10 @@ namespace GCBPMS
 				app.UseHsts();
 			}
 
-			app.UseHttpsRedirection();
+            app.UseAuthentication();
+            app.UseAuthorization();
+
+            app.UseHttpsRedirection();
 
 			app.UseStaticFiles();
 			app.UseAntiforgery();

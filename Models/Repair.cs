@@ -23,6 +23,10 @@ public partial class Repair
 
     public int RequestId { get; set; }
 
+    public string? AcceptedBy { get; set; }
+
+    public string? CompletedBy { get; set; }
+
     public virtual ICollection<RepairCost> RepairCosts { get; set; } = new List<RepairCost>();
 
     public virtual Request Request { get; set; } = null!;

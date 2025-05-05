@@ -1,179 +1,360 @@
-﻿@page "/master-data"
+﻿@attribute [Authorize(Roles = "Admin, Maintenance Admin, Production Admin")]
+
+@page "/master-data"
+
+<title>Master Data</title>
 
 @inject MasterDataPageServices MDPS
-@inject DialogService DialogService 
+@inject DialogService DialogService
 
 <RadzenCard>
-    <RadzenText TextStyle="TextStyle.DisplayH5">Master Data</RadzenText>
+	<RadzenText TextStyle="TextStyle.DisplayH5">Master Data</RadzenText>
 
-    <hr />
+	<hr />
 
-    <RadzenDropDown @bind-Value="selectedFilterOption" Data="@Enum.GetValues(typeof(MasterDataType))" />
-    <RadzenButton Icon="add_circle_outline"
-                  Text="Create New"
-                  ButtonStyle="ButtonStyle.Primary"
-                  Click="@OpenCreateDialog" />
+	<div style="margin-bottom: 10px;">
 
-    @if (selectedFilterOption == MasterDataType.Phase)
-    {
-        <RadzenDataGrid ref="@phasesGrid" Data="@phases" AllowFiltering="true" AllowPaging="true" AllowSorting="true" PageSize="10">
-            <Columns>
-                <RadzenDataGridColumn Property="Id" Title="Id" />
-                <RadzenDataGridColumn Property="PhaseName" Title="Phase Name" />
-                <RadzenDataGridColumn Property="PotNumber" Title="Pot Number" />
-                <RadzenDataGridColumn Property="Active" Title="Active" />
-            </Columns>
-        </RadzenDataGrid>
-    }
-    else if (selectedFilterOption == MasterDataType.Brand)
-    {
-        <RadzenDataGrid ref="@brandsGrid" Data="@brands" AllowFiltering="true" AllowPaging="true" AllowSorting="true" PageSize="10">
-            <Columns>
-                <RadzenDataGridColumn Property="Id" Title="Id" />
-                <RadzenDataGridColumn Property="BrandName" Title="Brand Name" />
-                <RadzenDataGridColumn Property="Active" Title="Active" />
-            </Columns>
-        </RadzenDataGrid>
-    }
-    else if (selectedFilterOption == MasterDataType.Plate)
-    {
-        <RadzenDataGrid ref="@platesGrid" Data="@plates" AllowFiltering="true" AllowPaging="true" AllowSorting="true" PageSize="10">
-            <Columns>
-                <RadzenDataGridColumn Property="Id" Title="Id" />
-                <RadzenDataGridColumn Property="PlateName" Title="Plate Name" />
-                <RadzenDataGridColumn Property="Active" Title="Active" />
-                <RadzenDataGridColumn Property="BrandId" Title="Brand">
-                    <Template Context="plate">
-                        @(brands.FirstOrDefault(b => b.Id == plate.PlateBrand)?.BrandName ?? "")
-                    </Template>
-                </RadzenDataGridColumn>
-                <RadzenDataGridColumn Property="PlateStatus" Title="Status" />
-                <RadzenDataGridColumn Property="PlateInstallDatetime" Title="Install Date" />
-                <RadzenDataGridColumn Property="PhaseType" Title="Phase Type">
-                    <Template Context="plate">
-                        @(phases.FirstOrDefault(p => p.Id == plate.PhaseType)?.PhaseName ?? "")
-                    </Template>
-                </RadzenDataGridColumn>
-            </Columns>
-        </RadzenDataGrid>
-    }
-    else if (selectedFilterOption == MasterDataType.Pot)
-    {
-        <RadzenDataGrid ref="@potsGrid" Data="@pots" AllowFiltering="true" AllowPaging="true" AllowSorting="true" PageSize="10">
-            <Columns>
-                <RadzenDataGridColumn Property="Id" Title="Id" />
-                <RadzenDataGridColumn Property="PotName" Title="Pot Name" />
-                <RadzenDataGridColumn Property="Active" Title="Active" />
-                <RadzenDataGridColumn Property="PressId" Title="Press">
-                    <Template Context="pot">
-                        @(presses.FirstOrDefault(p => p.Id == pot.PressId)?.PressName ?? "")
-                    </Template>
-                </RadzenDataGridColumn>
-                <RadzenDataGridColumn Property="PlateId" Title="Plate">
-                    <Template Context="pot">
-                        @(plates.FirstOrDefault(p => p.Id == pot.PlateId)?.PlateName ?? "")
-                    </Template>
-                </RadzenDataGridColumn>
-            </Columns>
-        </RadzenDataGrid>
-    }
-    else if (selectedFilterOption == MasterDataType.Press)
-    {
-        <RadzenDataGrid ref="@pressesGrid" Data="@presses" AllowFiltering="true" AllowPaging="true" AllowSorting="true" PageSize="10">
-            <Columns>
-                <RadzenDataGridColumn Property="Id" Title="Id" />
-                <RadzenDataGridColumn Property="PressName" Title="Press Name" />
-                <RadzenDataGridColumn Property="Active" Title="Active" />
-                <RadzenDataGridColumn Property="PhaseId" Title="Phase">
-                    <Template Context="press">
-                        @(phases.FirstOrDefault(p => p.Id == press.PhaseId)?.PhaseName ?? "")
-                    </Template>
-                </RadzenDataGridColumn>
-            </Columns>
-        </RadzenDataGrid>
-    }
+		<RadzenDropDown @bind-Value="selectedFilterOption" Data="@Enum.GetValues(typeof(GlobalFunction.MasterDataType))"/>
+
+		<RadzenButton Icon="add_circle_outline"
+					  Text="Create New"
+					  ButtonStyle="ButtonStyle.Primary"
+					  Click="@OpenCreateDialog" />
+	</div>
+
+
+	@if (selectedFilterOption == GlobalFunction.MasterDataType.Phase)
+	{
+		<RadzenDataGrid ref="@phasesGrid" Data="@phases" TItem="Phase"
+		AllowFiltering="true" AllowPaging="true" AllowSorting="true" AllowColumnResize="true"
+		PageSize="20" CellDoubleClick="@(async (args) => await onPhaseCellDoubleClick(args))" Responsive="true">
+			<Columns>
+				<RadzenDataGridColumn Property="PhaseName" Title="Phase Name" />
+				<RadzenDataGridColumn Property="PotNumber" Title="Pot Number" />
+				<RadzenDataGridColumn Property="Active" Title="Active" />
+
+			</Columns>
+		</RadzenDataGrid>
+	}
+	else if (selectedFilterOption == GlobalFunction.MasterDataType.Brand)
+	{
+		<RadzenDataGrid ref="@brandsGrid" Data="@brands" TItem="Brand"
+		AllowFiltering="true" AllowPaging="true" AllowSorting="true" AllowColumnResize="true"
+		PageSize="20" CellDoubleClick="@(async (args) => await onBrandCellDoubleClick(args))" Responsive="true">
+			<Columns>
+				<RadzenDataGridColumn Property="BrandName" Title="Brand Name" />
+				<RadzenDataGridColumn Property="Active" Title="Active" />
+			</Columns>
+		</RadzenDataGrid>
+	}
+	else if (selectedFilterOption == GlobalFunction.MasterDataType.Plate)
+	{
+		<RadzenDataGrid ref="@platesGrid" Data="@plates" TItem="Plate"
+		AllowFiltering="true" AllowPaging="true" AllowSorting="true" AllowColumnResize="true"
+		PageSize="20" CellDoubleClick="@(async (args) => await onPlateCellDoubleClick(args))" Responsive="true">
+			<Columns>
+				<RadzenDataGridColumn Property="PlateName" Title="Plate Name" />
+
+				<RadzenDataGridColumn Title="Brand">
+					<Template Context="plate">
+						@(plate.PlateBrandNavigation?.BrandName ?? "")
+					</Template>
+				</RadzenDataGridColumn>
+				<RadzenDataGridColumn Property="PlateStatus" Title="Status" />
+				<RadzenDataGridColumn Property="PlateInstallDatetime" Title="Install Date">
+					<Template Context="plate">
+						@(plate.PlateInstallDatetime.ToString("dd/MM/yyyy hh:mm tt"))
+					</Template>
+				</RadzenDataGridColumn>
+				<RadzenDataGridColumn Property="PhaseType" Title="Phase Type">
+					<Template Context="plate">
+						@*  @(phases.FirstOrDefault(p => p.Id == plate.PhaseType)?.PhaseName ?? "") *@
+						@(plate.PhaseTypeNavigation?.PhaseName ?? "N/A")
+					</Template>
+				</RadzenDataGridColumn>
+				<RadzenDataGridColumn Property="Active" Title="Active" />
+			</Columns>
+		</RadzenDataGrid>
+	}
+	else if (selectedFilterOption == GlobalFunction.MasterDataType.Pot)
+	{
+		<RadzenDataGrid ref="@potsGrid" Data="@pots" TItem="Pot" AllowFiltering="true" AllowPaging="true" AllowSorting="true"
+		AllowColumnResize="true"
+		PageSize="20" CellDoubleClick="@(async (args) => await onPotCellDoubleClick(args))" Responsive="true">
+			<Columns>
+				<RadzenDataGridColumn Property="PressId" Title="Press">
+					<Template Context="pot">
+						@* @(pot.FirstOrDefault(p => p.Id == pot.PressId)?.PressName ?? "") *@
+						@(pot.Press.PressName)
+					</Template>
+				</RadzenDataGridColumn>
+				<RadzenDataGridColumn Property="PotName" Title="Pot Name" />
+				<RadzenDataGridColumn Property="PlateId" Title="Plate">
+					<Template Context="pot">
+						@* @(plates.FirstOrDefault(p => p.Id == pot.PlateId)?.PlateName ?? "Empty") *@
+						@(pot.Plate?.PlateName ?? "Empty")
+					</Template>
+				</RadzenDataGridColumn>
+				<RadzenDataGridColumn Property="Active" Title="Active" />
+			</Columns>
+		</RadzenDataGrid>
+	}
+	else if (selectedFilterOption == GlobalFunction.MasterDataType.Press)
+	{
+		<RadzenDataGrid ref="@pressesGrid" Data="@presses" TItem="Press" AllowFiltering="true" AllowPaging="true" AllowSorting="true" AllowColumnResize="true"
+		PageSize="20" CellDoubleClick="@(async (args) => await onPressCellDoubleClick(args))" Responsive="true">
+			<Columns>
+
+				<RadzenDataGridColumn Property="PressName" Title="Press Name" />
+				<RadzenDataGridColumn Property="PhaseId" Title="Phase">
+					<Template Context="press">
+						@(phases.FirstOrDefault(p => p.Id == press.PhaseId)?.PhaseName ?? "")
+					</Template>
+				</RadzenDataGridColumn>
+				<RadzenDataGridColumn Property="Active" Title="Active" />
+
+			</Columns>
+		</RadzenDataGrid>
+	}
+	else if (selectedFilterOption == GlobalFunction.MasterDataType.User)
+	{
+		<RadzenDataGrid ref="@userGrid" Data="@userList" TItem="AspNetUser"
+		AllowFiltering="true" AllowPaging="true" AllowSorting="true" AllowColumnResize="true"
+		PageSize="20" CellDoubleClick="onAspNetUserCellDoubleClick" Responsive="true">
+			<Columns>
+
+				<RadzenDataGridColumn Property="UserName" Title="Username" />
+				<RadzenDataGridColumn Title="Roles">
+					<Template Context="user">
+						@if (user.Roles.Any())
+						{
+							@string.Join(", ", user.Roles.Select(r => r.Name))
+						}
+						else
+						{
+							<span>No Roles Assigned</span>
+						}
+					</Template>
+				</RadzenDataGridColumn>
+
+				<RadzenDataGridColumn Property="Active" Title="Active" />
+
+			</Columns>
+		</RadzenDataGrid>
+	}
 
 </RadzenCard>
 
 
 @code {
 
+	GlobalFunction.MasterDataType selectedFilterOption = GlobalFunction.MasterDataType.Phase;
 
-    private enum MasterDataType{
-        Phase,
-        Brand,
-        Plate,
-        Pot,
-        Press
-    }
+	private List<Phase> phases = new List<Phase>();
+	private List<Brand> brands = new List<Brand>();
+	private List<Plate> plates = new List<Plate>();
+	private List<Pot> pots = new List<Pot>();
+	private List<Press> presses = new List<Press>();
+	private List<AspNetUser> userList = new List<AspNetUser>();
 
-    private MasterDataType selectedFilterOption = MasterDataType.Phase;
+	RadzenDataGrid<Phase> phasesGrid = new RadzenDataGrid<Phase>();
+	RadzenDataGrid<Brand> brandsGrid = new RadzenDataGrid<Brand>();
+	RadzenDataGrid<Plate> platesGrid = new RadzenDataGrid<Plate>();
+	RadzenDataGrid<Pot> potsGrid = new RadzenDataGrid<Pot>();
+	RadzenDataGrid<Press> pressesGrid = new RadzenDataGrid<Press>();
+	RadzenDataGrid<AspNetUser> userGrid = new RadzenDataGrid<AspNetUser>();
 
-    private List<Phase> phases = new List<Phase>();
-    private List<Brand> brands = new List<Brand>();
-    private List<Plate> plates = new List<Plate>();
-    private List<Pot> pots = new List<Pot>();
-    private List<Press> presses = new List<Press>();    
+	protected override async Task OnInitializedAsync()
+	{
+		phases = await MDPS.getPhasesAsync();
+		brands = await MDPS.getBrandsAsync();
+		plates = await MDPS.getPlatesAsync();
+		pots = await MDPS.getPotsAsync();
+		presses = await MDPS.getPressesAsync();
+		userList = await MDPS.getUserListAsync();
+		await base.OnInitializedAsync();
+	}
 
-    private RadzenDataGrid<Phase> phasesGrid;
-    private RadzenDataGrid<Brand> brandsGrid;
-    private RadzenDataGrid<Plate> platesGrid;
-    private RadzenDataGrid<Pot> potsGrid;
-    private RadzenDataGrid<Press> pressesGrid;
+	// private async Task OnFilterOptionChange(object value)
+	// {
+	// 	selectedFilterOption = (GlobalFunction.MasterDataType)value;
+	// 	await LoadSelectedData(); // Load data dynamically based on the selected filter
+	// }
 
-    protected override async Task OnInitializedAsync()
-    {
-        phases = await MDPS.getPhasesAsync();  
-        brands = await MDPS.getBrandsAsync();
-        plates = await MDPS.getPlatesAsync();
-        pots = await MDPS.getPotsAsync();
-        presses = await MDPS.getPressesAsync();
-    }
+	// private async Task LoadSelectedData()
+	// {
+	// 	switch (selectedFilterOption)
+	// 	{
+	// 		case GlobalFunction.MasterDataType.Phase:
+	// 			phases = await MDPS.getPhasesAsync();
+	// 			break;
+	// 		case GlobalFunction.MasterDataType.Brand:
+	// 			brands = await MDPS.getBrandsAsync();
+	// 			break;
+	// 		case GlobalFunction.MasterDataType.Plate:
+	// 			plates = await MDPS.getPlatesAsync();
+	// 			break;
+	// 		case GlobalFunction.MasterDataType.Pot:
+	// 			pots = await MDPS.getPotsAsync();
+	// 			break;
+	// 		case GlobalFunction.MasterDataType.Press:
+	// 			presses = await MDPS.getPressesAsync();
+	// 			break;
+	// 		case GlobalFunction.MasterDataType.User:
+	// 			userList = await MDPS.getUserListAsync();
+	// 			break;
+	// 	}
+	// }
 
-    private async Task OpenCreateDialog()
-    {
-        var dialogResult = await DialogService.OpenAsync<CreateMasterDataDialog>("Create New",
-            new Dictionary<string, object>
-            {
-                { "DataType", selectedFilterOption },
-                { "Brands", brands },
-                { "Phases", phases },
-                { "Plates", plates },
-                { "Presses", presses }
-            },
-            new DialogOptions
-            {
-                Width = "500px",
-                Height = "auto",
-                CloseDialogOnEsc = true,
-                CloseDialogOnOverlayClick = false
-            });
+	private async Task OpenCreateDialog()
+	{
+		var activeBrands = brands.Where(b => b.Active).ToList();
+		var activePhases = phases.Where(b => b.Active).ToList(); 
+		var activePlates = plates.Where(b => b.Active).ToList(); 
+		var activePresses = presses.Where(b => b.Active).ToList();
 
-        if (dialogResult != null)
-        {
-            await RefreshData();
-        }
-    }
+		var dialogResult = await DialogService.OpenAsync<CreateMasterDataDialog>($"Create New {selectedFilterOption}",
+			new Dictionary<string, object>
+				{
+				{ "DataType", selectedFilterOption },
+				{ "Brands", activeBrands },
+				{ "Phases", activePhases },
+				{ "Plates", activePlates },
+				{ "Presses", activePresses }
+				},
+			new DialogOptions
+				{
+					Width = "500px",
+					Height = "auto",
+					CloseDialogOnEsc = true,
+					CloseDialogOnOverlayClick = false
+				});
 
-    private async Task RefreshData()
-    {
-        switch (selectedFilterOption)
-        {
-            case MasterDataType.Phase:
-                phases = await MDPS.getPhasesAsync();
-                break;
-            case MasterDataType.Brand:
-                brands = await MDPS.getBrandsAsync();
-                break;
-            case MasterDataType.Plate:
-                plates = await MDPS.getPlatesAsync();
-                break;
-            case MasterDataType.Pot:
-                pots = await MDPS.getPotsAsync();
-                break;
-            case MasterDataType.Press:
-                presses = await MDPS.getPressesAsync();
-                break;
-        }
-    }
+		if (dialogResult != null)
+		{
+			await RefreshData();
+		}
+	}
+
+	private async Task RefreshData()
+	{
+		switch (selectedFilterOption)
+		{
+			case GlobalFunction.MasterDataType.Phase:
+
+				phases = await MDPS.getPhasesAsync();
+				// await phasesGrid.Reload();
+				break;
+			case GlobalFunction.MasterDataType.Brand:
+				brands = await MDPS.getBrandsAsync();
+				// await brandsGrid.Reload();
+				break;
+			case GlobalFunction.MasterDataType.Plate:
+				plates = await MDPS.getPlatesAsync();
+				// await platesGrid.Reload();
+				break;
+			case GlobalFunction.MasterDataType.Pot:
+				pots = await MDPS.getPotsAsync();
+				// await potsGrid.Reload();
+				break;
+			case GlobalFunction.MasterDataType.Press:
+				presses = await MDPS.getPressesAsync();
+				// await pressesGrid.Reload();
+				break;
+			case GlobalFunction.MasterDataType.User:
+				userList = await MDPS.getUserListAsync();
+				// await userGrid.Reload();
+				break;
+		}
+
+		await InvokeAsync(() =>
+								{
+									StateHasChanged();
+								});
+	}
+
+	private async Task onPhaseCellDoubleClick(DataGridCellMouseEventArgs<Phase> args)
+	{
+
+		await DialogService.OpenAsync<EditMasterDataDialog>($"Edit {selectedFilterOption}",
+			new Dictionary<string, object>
+				{
+				{ "selectedPhase", args.Data },
+				{ "selectedFilterOption", selectedFilterOption }
+				});
+
+		await RefreshData();
+	
+		
+	}
+
+	private async Task onBrandCellDoubleClick(DataGridCellMouseEventArgs<Brand> args)
+	{
+		await DialogService.OpenAsync<EditMasterDataDialog>($"Edit {selectedFilterOption}",
+			new Dictionary<string, object>
+					{
+				{ "selectedBrand", args.Data },
+				{ "selectedFilterOption", selectedFilterOption }
+					});
+		await RefreshData();
+	}
+
+	private async Task onPressCellDoubleClick(DataGridCellMouseEventArgs<Press> args)
+	{
+		var activePhases = phases.Where(b => b.Active).ToList();
+
+		await DialogService.OpenAsync<EditMasterDataDialog>($"Edit {selectedFilterOption}",
+			new Dictionary<string, object>
+						{
+				{ "selectedPress", args.Data },
+				{ "selectedFilterOption", selectedFilterOption },
+				{ "phases", activePhases}
+						});
+		await RefreshData();
+	}
+
+	private async Task onPlateCellDoubleClick(DataGridCellMouseEventArgs<Plate> args)
+	{
+		var activePhases = phases.Where(b => b.Active).ToList();
+		var activeBrands = brands.Where(b => b.Active).ToList();
+
+		await DialogService.OpenAsync<EditMasterDataDialog>($"Edit {selectedFilterOption}",
+			new Dictionary<string, object>
+					{
+			{ "selectedPlate", args.Data },
+			{ "selectedFilterOption", selectedFilterOption },
+			{ "brands", activeBrands },
+			{ "phases", activePhases }
+					});
+		await RefreshData();
+	}
+
+	private async Task onPotCellDoubleClick(DataGridCellMouseEventArgs<Pot> args)
+	{
+		await DialogService.OpenAsync<EditMasterDataDialog>($"Edit {selectedFilterOption}",
+			new Dictionary<string, object>
+					{
+			{ "selectedPot", args.Data },
+			{ "selectedFilterOption", selectedFilterOption },
+
+					});
+		await RefreshData();
+	}
+
+	private async Task onAspNetUserCellDoubleClick(DataGridCellMouseEventArgs<AspNetUser> args)
+	{
+
+		await DialogService.OpenAsync<EditMasterDataDialog>("Edit " + selectedFilterOption, new Dictionary<string, object>{
+			{ "selectedUser", args.Data }
+			,{ "selectedFilterOption", selectedFilterOption }
+			});
+		await RefreshData();
+
+		// aspNetUserList = aspNetUserList = await MDPS.getUserViewModelList(await MDPS.getAspNetUserList());
+		// await AspNetUserGrid.Reload();
+		// await InvokeAsync(() =>
+		//                         {
+		//                             StateHasChanged();
+		//                         });
+	}
 }

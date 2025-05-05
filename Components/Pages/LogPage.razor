@@ -1,0 +1,37 @@
+﻿@attribute [Authorize(Roles = "Admin, Maintenance Admin, Production Admin")]
+
+@page "/log"
+
+<title>Log</title>
+
+@inject MaintenanceDashboardServices MDS
+
+
+<RadzenCard>
+    <RadzenText TextStyle="TextStyle.DisplayH5">Log Page</RadzenText>
+    <hr />
+    <RadzenDataGrid Data="@userActions" TItem="UserAction"  Responsive="true" AllowFiltering="true" AllowPaging="true" PageSize="20">
+        <Columns>
+            <RadzenDataGridColumn Property="Username" Title="Username" />
+            <RadzenDataGridColumn Property="ActionNavigation.FullCode" Title="Action" />
+            <RadzenDataGridColumn Property="Plate.PlateName" Title="Plate" />
+            <RadzenDataGridColumn Property="ActionDatetime" Title="Action Date">
+                <Template Context="request">
+					@request.ActionDatetime?.ToString("dd/MM/yyyy hh:mm tt")
+                </Template>
+            </RadzenDataGridColumn>
+           
+
+        </Columns>
+    </RadzenDataGrid>
+</RadzenCard>
+
+
+@code {
+    private List<UserAction> userActions = new List<UserAction>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        userActions = await GF.getUserActionList();
+    }
+}

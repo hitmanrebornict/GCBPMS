@@ -96,10 +96,10 @@ namespace GCBPMS.Areas.Identity.Pages.Account.Manage
 
         public async Task<IActionResult> OnPostAsync()
         {
-            if (!ModelState.IsValid)
-            {
-                return Page();
-            }
+            //if (!ModelState.IsValid)
+            //{
+            //    return Page();
+            //}
 
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
@@ -107,21 +107,19 @@ namespace GCBPMS.Areas.Identity.Pages.Account.Manage
                 return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
             }
 
-            var changePasswordResult = await _userManager.ChangePasswordAsync(user, Input.OldPassword, Input.NewPassword);
-            if (!changePasswordResult.Succeeded)
-            {
-                foreach (var error in changePasswordResult.Errors)
-                {
-                    ModelState.AddModelError(string.Empty, error.Description);
-                }
-                return Page();
-            }
+			//var changePasswordResult = await _userManager.ChangePasswordAsync(user, Input.OldPassword, Input.NewPassword);
+			var removePasswordResult = await _userManager.RemovePasswordAsync(user);
+			if (removePasswordResult.Succeeded)
+			{
+				await _userManager.AddPasswordAsync(user, Input.NewPassword);
+			}
 
-            await _signInManager.RefreshSignInAsync(user);
-            _logger.LogInformation("User changed their password successfully.");
-            StatusMessage = "Your password has been changed.";
+			await _signInManager.RefreshSignInAsync(user);
 
-            return RedirectToPage();
+			StatusMessage = "Your password has been changed.";
+
+			return RedirectToPage();
+			
         }
     }
 }

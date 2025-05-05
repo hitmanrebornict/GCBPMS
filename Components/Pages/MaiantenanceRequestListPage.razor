@@ -1,4 +1,8 @@
-﻿@page "/maintenance-request-list"
+﻿@attribute [Authorize(Roles = "Admin, Maintenance Admin, Maintenance User")]
+
+@page "/maintenance-request-list"
+
+<title>Request List</title>
 
 @inject MaintenanceRequestServices MRLPS;
 @inject NavigationManager NavigationManager;
@@ -6,11 +10,28 @@
 <RadzenCard>
     <RadzenText TextStyle="TextStyle.DisplayH5">Request List</RadzenText>
     <hr />
- <RadzenDataGrid TItem="Request" Data=@requests AllowFiltering=true FilterMode="FilterMode.CheckBoxList" AllowSorting=true RowDoubleClick="OnRowDoubleClick">
+    <RadzenDataGrid TItem="Request" Data=@requests AllowFiltering=true FilterMode="FilterMode.CheckBoxList" AllowSorting=true RowDoubleClick="OnRowDoubleClick" Responsive="true">
     <Columns>
         <RadzenDataGridColumn TItem="Request" Property="Plate.PlateName" Title="Plate Name" />
-        <RadzenDataGridColumn TItem="Request" Property="RequestDatetime" Title="Request Date" />
-        <RadzenDataGridColumn TItem="Request" Property="RequestStatus" Title="Request Remark" />
+         <RadzenDataGridColumn TItem="Request" Property="Plate.PlateBrandNavigation.BrandName" Title="Plate Brand" />
+        <RadzenDataGridColumn TItem="Request" Property="RequestDatetime" Title="Request Date" >
+            <Template Context="request">
+                @request.RequestDatetime.ToString("dd/MM/yyyy hh:mm tt")
+            </Template>
+            </RadzenDataGridColumn>
+      @*   <RadzenDataGridColumn TItem="Request" Property="RequestStatus" Title="Request Status" /> *@
+            <RadzenDataGridColumn TItem="Request" Property="RequestStatus" Title="Request Status">
+                <Template Context="request">
+                      <RadzenBadge Text="Requested" Style="background-color: #f44336; color: white;" />              
+                </Template>
+            </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="Request" Property="Requestor" Title="Requestor" />
+            <RadzenDataGridColumn TItem="Request" Title="Actions">
+                <Template Context="request">
+                    <RadzenButton Text="View" Icon="visibility" ButtonStyle="ButtonStyle.Secondary"
+                                  Click="() => OnRowButtonClick(request)" />
+                </Template>
+            </RadzenDataGridColumn>
     </Columns>
  </RadzenDataGrid>
 </RadzenCard>
@@ -26,5 +47,11 @@
     void OnRowDoubleClick(DataGridRowMouseEventArgs<Request> args)
     {
         NavigationManager.NavigateTo($"request-detail/{args.Data.Id}");
+    }
+
+    void OnRowButtonClick(Request selectedRequest)
+    {
+        // Navigate to the plate detail page using the plate ID
+        NavigationManager.NavigateTo($"request-detail/{selectedRequest.Id}");
     }
 }

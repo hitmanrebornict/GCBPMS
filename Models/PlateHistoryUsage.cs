@@ -15,6 +15,8 @@ public partial class PlateHistoryUsage
 
     public int? PotId { get; set; }
 
+    public string? ChangeReason { get; set; }
+
     public virtual Plate? Plate { get; set; }
 
     public virtual Pot? Pot { get; set; }

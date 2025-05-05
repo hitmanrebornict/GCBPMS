@@ -1,80 +1,142 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">GCBPMS</a>
-    </div>
+﻿<div class="top-row ps-3 navbar navbar-dark" style="background-color:#1F2937">
+	<div class="container-fluid">
+		@* <a class="navbar-brand" href="">GCBPMS</a> *@
+		<a class="navbar-brand" href="" style="margin:0px;font-size:auto;"><img src="/assests//CocoaIcon.png" alt="Cocoa Picture" style="width:30px;height:30px;margin-right:5px;margin-bottom:5px;" />GCBPMS</a>
+	</div>
 </div>
 
 <input type="checkbox" title="Navigation menu" class="navbar-toggler" />
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
+<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()" style="background-color:#2E2E2E">
+	<nav class="flex-column">
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="master-data">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Master Data
-            </NavLink>
-        </div>
+		<CascadingAuthenticationState>
+			<div class="nav-item px-3">
+				<NavLink class="nav-link" href="press-detail-page">
+					<span class="material-symbols-outlined" style="margin-right:8px;">
+						format_list_bulleted
+					</span> Press Detail
+				</NavLink>
+			</div>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="press-detail-page">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Press Detail
-            </NavLink>
-        </div>
+			<div class="nav-item px-3">
+				<NavLink class="nav-link" href="plate-list">
+					<span class="material-symbols-outlined" style="margin-right:8px;">
+						reorder 
+					</span> Plate Detail
+				</NavLink>
+			</div>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="plate-assign">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Plate Assign
-            </NavLink>
-        </div>
+			<AuthorizeView Roles="Admin, Production Admin, Production User">
+				<div class="nav-item px-3">
+					<NavLink class="nav-link" href="plate-assign">
+						<span class="material-symbols-outlined" style="margin-right:8px;">
+							assignment_add
+						</span> Plate Assign
+					</NavLink>
+				</div>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="plate-list">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Plate Detail
-            </NavLink>
-        </div>
+				<div class="nav-item px-3">
+					<NavLink class="nav-link" href="prod-create-request">
+						<span class="material-symbols-outlined" style="margin-right:8px;">
+							add_circle
+						</span> Create Request
+					</NavLink>
+				</div>
+			</AuthorizeView>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="prod-create-request">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Create Request
-            </NavLink>
-        </div>
+			<AuthorizeView Roles="Admin, Maintenance Admin, Maintenance User">
+				<div class="nav-item px-3">
+					<NavLink class="nav-link" href="maintenance-request-list">
+						<span class="material-symbols-outlined" style="margin-right:8px;">
+							build 
+						</span> Request List
+					</NavLink>
+				</div>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="maintenance-request-list">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Request List
-            </NavLink>
-        </div>
+				<div class="nav-item px-3">
+					<NavLink class="nav-link" href="mt-repair-list">
+						<span class="material-symbols-outlined" style="margin-right:8px;">
+							construction 
+						</span> Repair List
+					</NavLink>
+				</div>
+			</AuthorizeView>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="mt-repair-list">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Repair List
-            </NavLink>
-        </div>
+			<AuthorizeView Roles="Admin, Maintenance Admin, Production Admin">
+				<div class="nav-item px-3">
+					<NavLink class="nav-link" href="report-page">
+						<span class="material-symbols-outlined" style="margin-right:8px;">
+							description
+						</span> Report
+					</NavLink>
+				</div>
+			</AuthorizeView>
 
-        @* <div class="nav-item px-3">
-            <NavLink class="nav-link" @onclick="()=>expandSubNav = !expandSubNav">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Fetch Data
-            </NavLink>
+			<AuthorizeView Roles="Admin, Maintenance Admin, Maintenance User">
+				<div class="nav-item px-3">
+					<NavLink class="nav-link" href="mt-dashboard">
+						<span class="material-symbols-outlined" style="margin-right:8px;">
+							dashboard
+						</span> Dashboard
+					</NavLink>
+				</div>
+			</AuthorizeView>
 
-            @if (expandSubNav)
-            {
-                <NavLink class="nav-link" href="mt-repair-list">
-                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Repair List
-                </NavLink>
-                <NavLink class="nav-link" href="mt-repair-list">
-                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Repair List
-                </NavLink>
-            }
-        </div> *@
+			<AuthorizeView Roles="Admin, Maintenance Admin, Production Admin">
+				<div class="nav-item px-3">
+					<NavLink class="nav-link" href="log">
+						<span class="material-symbols-outlined" style="margin-right:8px;">
+							description
+						</span> Log
+					</NavLink>
+				</div>
+			</AuthorizeView>
 
-    </nav>
+			<AuthorizeView Roles="Admin, Maintenance Admin, Production Admin">
+				<div class="nav-item px-3">
+					<NavLink class="nav-link" href="master-data">
+						<span class="material-symbols-outlined" style="margin-right:8px;">
+                            database
+                        </span> Master Data
+					</NavLink>
+				</div>
+			</AuthorizeView>
+
+		</CascadingAuthenticationState>
+		@*  <div class="nav-item px-3">
+		<NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+		<span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+		</NavLink>
+		</div> *@
+
+
+
+
+
+
+
+
+
+		@* <div class="nav-item px-3">
+		<NavLink class="nav-link" @onclick="()=>expandSubNav = !expandSubNav">
+		<span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Fetch Data
+		</NavLink>
+
+		@if (expandSubNav)
+		{
+		<NavLink class="nav-link" href="mt-repair-list">
+		<span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Repair List
+		</NavLink>
+		<NavLink class="nav-link" href="mt-repair-list">
+		<span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Repair List
+		</NavLink>
+		}
+		</div> *@
+
+	</nav>
 </div>
 
-@code{
-    private bool expandSubNav;
+@code {
+	private bool expandSubNav;
 }

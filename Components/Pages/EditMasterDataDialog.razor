@@ -1,0 +1,495 @@
+﻿@inject MasterDataPageServices MDPS
+@inject DialogService dialogService
+
+@if (selectedFilterOption == GlobalFunction.MasterDataType.Phase)
+{
+	<div class="col-md-12">
+		<div style="margin-bottom: 1rem" class="row">
+			<div class="col-md-3">
+				<RadzenLabel Text="Phase Name" Component="Phase Name" style="width: 100%">
+				</RadzenLabel>
+			</div>
+			<div class="col-md-9">
+				<RadzenTextBox MaxLength="100" style="width: 100%" @bind-Value="selectedPhase.PhaseName" Name="CountryName" Placeholder="Phase Name" />
+			</div>
+		</div>
+		<div style="margin-bottom: 1rem" class="row">
+			<div class="col-md-3">
+				<RadzenLabel Text="Pot Number" Component="Pot Number" style="width: 100%">
+				</RadzenLabel>
+			</div>
+			<div class="col-md-9">
+				<RadzenNumeric MaxLength="100" style="width: 100%" @bind-Value="selectedPhase.PotNumber" />
+			</div>
+		</div>
+		<div style="margin-bottom: 1rem" class="row">
+			<div class="col-md-3">
+				<RadzenLabel Text="Active?" Component="Active" style="width: 100%">
+				</RadzenLabel>
+			</div>
+			<div class="col-md-9">
+				<RadzenCheckBox @bind-Value="selectedPhase.Active" />
+			</div>
+		</div>
+		<RadzenButton ButtonType="Radzen.ButtonType.Submit" Icon="save" Text="Save" ButtonStyle="ButtonStyle.Primary" Click="@(async () => await buttonPhaseSubmitOnClick(selectedPhase))" />
+
+	</div>
+}
+else if (selectedFilterOption == GlobalFunction.MasterDataType.Brand)
+{
+	<div class="col-md-12">
+		<div style="margin-bottom: 1rem" class="row">
+			<div class="col-md-3">
+				<RadzenLabel Text="Brand Name" Component="Brand Name" style="width: 100%">
+				</RadzenLabel>
+			</div>
+			<div class="col-md-9">
+				<RadzenTextBox MaxLength="100" style="width: 100%" @bind-Value="selectedBrand.BrandName" Name="CountryName" Placeholder="Phase Name" />
+			</div>
+		</div>
+		<div style="margin-bottom: 1rem" class="row">
+			<div class="col-md-3">
+				<RadzenLabel Text="Active?" Component="Active" style="width: 100%">
+				</RadzenLabel>
+			</div>
+			<div class="col-md-9">
+				<RadzenCheckBox @bind-Value="selectedBrand.Active" />
+			</div>
+		</div>
+		<RadzenButton ButtonType="Radzen.ButtonType.Submit" Icon="save" Text="Save" ButtonStyle="ButtonStyle.Primary" Click="@(async () => await buttonBrandSubmitOnClick(selectedBrand))" />
+
+	</div>
+
+}
+else if (selectedFilterOption == GlobalFunction.MasterDataType.Plate)
+{
+	<div class="col-md-12">
+		<!-- Plate Name -->
+		<div style="margin-bottom: 1rem" class="row">
+			<div class="col-md-3">
+				<RadzenLabel Text="Plate Name" Component="Plate Name" style="width: 100%" />
+			</div>
+			<div class="col-md-9">
+				<RadzenTextBox MaxLength="100" style="width: 100%" @bind-Value="selectedPlate.PlateName" Placeholder="Plate Name" />
+			</div>
+		</div>
+
+		<!-- Brand -->
+		<div style="margin-bottom: 1rem" class="row">
+			<div class="col-md-3">
+				<RadzenLabel Text="Brand" Component="Brand" style="width: 100%" />
+			</div>
+			<div class="col-md-9">
+				<RadzenDropDown @bind-Value="selectedPlate.PlateBrand" Data="@brands" TextProperty="BrandName" ValueProperty="Id"
+								Placeholder="Select Brand" style="width: 100%" />
+			</div>
+		</div>
+
+		<!-- Install Date -->
+		<div style="margin-bottom: 1rem" class="row">
+			<div class="col-md-3">
+				<RadzenLabel Text="Install Date" Component="Install Date" style="width: 100%" />
+			</div>
+			<div class="col-md-9">
+				<RadzenDatePicker @bind-Value="selectedPlate.PlateInstallDatetime" Style="width: 100%" Placeholder="Select Install Date" DateFormat="dd/MM/yyyy" />
+			</div>
+		</div>
+
+		<!-- Phase Type -->
+		<div style="margin-bottom: 1rem" class="row">
+			<div class="col-md-3">
+				<RadzenLabel Text="Phase Type" Component="Phase Type" style="width: 100%" />
+			</div>
+			<div class="col-md-9">
+				<RadzenDropDown @bind-Value="selectedPlate.PhaseType" Data="@phases" TextProperty="PhaseName" ValueProperty="Id"
+								Placeholder="Select Phase Type" style="width: 100%" />
+			</div>
+		</div>
+
+		<!-- Active Status -->
+		<div style="margin-bottom: 1rem" class="row">
+			<div class="col-md-3">
+				<RadzenLabel Text="Active?" Component="Active" style="width: 100%" />
+			</div>
+			<div class="col-md-9">
+				<RadzenCheckBox @bind-Value="selectedPlate.Active" />
+			</div>
+		</div>
+		<RadzenButton ButtonType="Radzen.ButtonType.Submit" Icon="save" Text="Save" ButtonStyle="ButtonStyle.Primary" Click="@(async () => await buttonPlateSubmitOnClick(selectedPlate))" />
+
+	</div>
+}
+else if (selectedFilterOption == GlobalFunction.MasterDataType.Pot)
+{
+	<div class="col-md-12">
+		<!-- Plate Name -->
+		<div style="margin-bottom: 1rem" class="row">
+			<div class="col-md-3">
+				<RadzenLabel Text="Press Name" Component="Plate Name" style="width: 100%" />
+			</div>
+			<div class="col-md-9">
+				<RadzenTextBox style="width: 100%" @bind-Value="selectedPot.Press.PressName" Placeholder="Plate Name" Disabled="true" />
+			</div>
+		</div>
+
+		<!-- Brand -->
+		<div style="margin-bottom: 1rem" class="row">
+			<div class="col-md-3">
+				<RadzenLabel Text="Pot Name" Component="Brand" style="width: 100%" />
+			</div>
+			<div class="col-md-9">
+				<RadzenTextBox MaxLength="100" style="width: 100%" @bind-Value="selectedPot.PotName" Placeholder="Plate Name" />
+			</div>
+		</div>
+
+		<!-- Active Status -->
+		<div style="margin-bottom: 1rem" class="row">
+			<div class="col-md-3">
+				<RadzenLabel Text="Active?" Component="Active" style="width: 100%" />
+			</div>
+			<div class="col-md-9">
+				<RadzenCheckBox @bind-Value="selectedPot.Active" />
+			</div>
+		</div>
+		<RadzenButton ButtonType="Radzen.ButtonType.Submit" Icon="save" Text="Save" ButtonStyle="ButtonStyle.Primary" Click="@(async () => await buttonPotSubmitOnClick(selectedPot))" />
+
+	</div>
+}
+
+else if (selectedFilterOption == GlobalFunction.MasterDataType.Press)
+{
+	<div class="col-md-12">
+		<div style="margin-bottom: 1rem" class="row">
+			<div class="col-md-3">
+				<RadzenLabel Text="Press Name" Component="Press Name" style="width: 100%">
+				</RadzenLabel>
+			</div>
+			<div class="col-md-9">
+				<RadzenTextBox MaxLength="100" style="width: 100%" @bind-Value="selectedPress.PressName" Name="CountryName" Placeholder="Phase Name" />
+			</div>
+		</div>
+		<div style="margin-bottom: 1rem" class="row">
+			<div class="col-md-3">
+				<RadzenLabel Text="Phase" Component="Phase" style="width: 100%">
+				</RadzenLabel>
+			</div>
+			<div class="col-md-9">
+				<RadzenDropDown @bind-Value="@selectedPress.Phase" Data="@phases" TextProperty="PhaseName"></RadzenDropDown>
+			</div>
+		</div>
+		<div style="margin-bottom: 1rem" class="row">
+			<div class="col-md-3">
+				<RadzenLabel Text="Active?" Component="Active" style="width: 100%">
+				</RadzenLabel>
+			</div>
+			<div class="col-md-9">
+				<RadzenCheckBox @bind-Value="selectedPress.Active" />
+			</div>
+		</div>
+		<RadzenButton ButtonType="Radzen.ButtonType.Submit" Icon="save" Text="Save" ButtonStyle="ButtonStyle.Primary" Click="@(async () => await buttonPressSubmitOnClick(selectedPress))" />
+
+	</div>
+}
+else if (selectedFilterOption == GlobalFunction.MasterDataType.User)
+{
+	<div class="col-md-12">
+		<div style="margin-bottom: 1rem" class="row">
+			<div class="col-md-3">
+				<RadzenLabel Text="Username" Component="Press Name" style="width: 100%">
+				</RadzenLabel>
+			</div>
+			<div class="col-md-9">
+				<RadzenTextBox MaxLength="100" style="width: 100%" @bind-Value="selectedUser.UserName" Name="CountryName" Placeholder="Phase Name" Disabled="true" />
+			</div>
+		</div>
+		<div style="margin-bottom: 1rem" class="row">
+			<div class="col-md-3">
+				<RadzenLabel Text="Role" Component="Phase" style="width: 100%">
+				</RadzenLabel>
+			</div>
+			<div class="col-md-9">
+				<RadzenDropDown @bind-Value="@selectedRole" Data="@roleList" style="width: 100%"></RadzenDropDown>
+			</div>
+		</div>
+		<div style="margin-bottom: 1rem" class="row">
+			<div class="col-md-3">
+				<RadzenLabel Text="Active?" Component="Active" style="width: 100%">
+				</RadzenLabel>
+			</div>
+			<div class="col-md-9">
+				<RadzenCheckBox @bind-Value="selectedUser.Active" />
+			</div>
+		</div>
+		<RadzenButton ButtonType="Radzen.ButtonType.Submit" Icon="save" Text="Save" ButtonStyle="ButtonStyle.Primary" Click="@(async () => await buttonUserDataSubmitOnClick(selectedUser))" />
+
+		<hr />
+		<h3> Reset Password</h3>
+		<div class="col-md-12">
+			<div style="margin-bottom: 1rem" class="row">
+				<div class="col-md-3">
+					<RadzenLabel Text="Password" Component="UserName" style="width: 100%">
+					</RadzenLabel>
+				</div>
+				<div class="col-md-9">
+					<RadzenPassword MaxLength="100" style="width: 100%" @bind-Value="password" Name="ParameterName" Placeholder="Password" />
+				</div>
+			</div>
+			<div style="margin-bottom: 1rem" class="row">
+				<div class="col-md-3">
+					<RadzenLabel Text="Confirm Password" Component="UserName" style="width: 100%">
+					</RadzenLabel>
+				</div>
+				<div class="col-md-9">
+					<RadzenPassword MaxLength="100" style="width: 100%" @bind-Value="confirmPassword" Name="ParameterName" Placeholder="Confirm Password" />
+				</div>
+			</div>
+			<div class="row">
+				<div class="col offset-sm-3">
+					<RadzenButton ButtonType="Radzen.ButtonType.Submit" Icon="save" Text="Save" ButtonStyle="ButtonStyle.Primary" Click="@(() =>  resetPasswordButtonOnClick(selectedUser,password,confirmPassword))" />
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+
+@code {
+
+	[Parameter]
+	public GlobalFunction.MasterDataType selectedFilterOption { get; set; }
+
+	[Parameter]
+	public Phase selectedPhase { get; set; }
+
+	[Parameter]
+	public Brand selectedBrand { get; set; }
+
+	[Parameter]
+	public Press selectedPress { get; set; }
+
+	[Parameter]
+	public List<Phase> phases { get; set; }
+
+	[Parameter]
+	public Plate selectedPlate { get; set; }
+
+	[Parameter]
+	public Pot selectedPot { get; set; }
+
+	[Parameter]
+	public List<Brand> brands { get; set; }
+
+	[Parameter]
+	public AspNetUser selectedUser { get; set; }
+
+	private string selectedRole, password, confirmPassword;
+
+	protected override async Task OnInitializedAsync()
+	{
+		if (selectedUser != null && selectedUser.Roles != null && selectedUser.Roles.Any())
+		{
+			// Get the name of the first role
+			selectedRole = selectedUser.Roles.First().Name;
+		}
+		else
+		{
+			// Default to null or handle cases where no roles exist
+			selectedRole = null;
+		}
+	}
+
+	private List<string> roleList = new List<string>()
+	{
+		"Maintenance Admin",
+		"Maintenance User",
+		"Production Admin",
+		"Production User",
+		"Admin"
+
+	};
+
+
+	private async Task buttonPhaseSubmitOnClick(Phase selectedPhase)
+	{
+		try
+		{
+			await MDPS.updatePhase(selectedPhase);
+			GF.ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "The item was successfully edited.", Duration = 40000 });
+			dialogService.Close();
+		}
+		catch(Exception ex)
+		{
+			GF.ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = ex.ToString(), Duration = 40000 });
+
+		}
+
+	}
+
+	private async Task buttonBrandSubmitOnClick(Brand selectedBrand)
+	{
+		try
+		{
+			await MDPS.updateBrand(selectedBrand);
+			GF.ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "The item was successfully edited.", Duration = 40000 });
+			dialogService.Close();
+		}
+		catch(Exception ex)
+		{
+			GF.ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = ex.ToString(), Duration = 40000 });
+
+		}
+
+
+		
+	}
+
+	private async Task buttonPlateSubmitOnClick(Plate selectedPlate)
+	{
+		try
+		{
+			await MDPS.updatePlate(selectedPlate);
+			GF.ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "The item was successfully edited.", Duration = 40000 });
+			dialogService.Close();
+		}
+		catch (Exception ex)
+		{
+			GF.ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = ex.ToString(), Duration = 40000 });
+
+		}
+	}
+
+	private async Task buttonPotSubmitOnClick(Pot selectedPot)
+	{
+		try
+		{
+			await MDPS.updatePot(selectedPot);
+
+			GF.ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "The item was successfully edited.", Duration = 40000 });
+			dialogService.Close();
+		}
+		catch (Exception ex)
+		{
+			GF.ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = ex.ToString(), Duration = 40000 });
+
+		}
+
+	}
+
+	private async Task buttonPressSubmitOnClick(Press selectedPress)
+	{
+		try
+		{
+			await MDPS.updatePress(selectedPress);
+			GF.ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "The item was successfully edited.", Duration = 40000 });
+			dialogService.Close();
+		}
+		catch (Exception ex)
+		{
+			GF.ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = ex.ToString(), Duration = 40000 });
+
+		}
+		
+	}
+
+	private async Task buttonUserDataSubmitOnClick(AspNetUser selectedUser)
+	{
+		try
+		{
+			await MDPS.updateUser(selectedUser, selectedRole);
+			GF.ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "The item was successfully edited.", Duration = 40000 });
+			dialogService.Close();
+		}
+		catch (Exception ex)
+		{
+			GF.ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = ex.ToString(), Duration = 40000 });
+
+		}
+
+	}
+
+	private async void resetPasswordButtonOnClick(AspNetUser selectedUser, string password, string confirmPassword)
+	{
+		if (password is null || confirmPassword is null)
+		{
+			GF.ShowNotification(new NotificationMessage
+				{
+					Severity = NotificationSeverity.Error,
+					Summary = "The password can't be null.",
+					Duration = 4000
+				});
+			return;
+		}
+
+		if (password != confirmPassword)
+		{
+			GF.ShowNotification(new NotificationMessage
+				{
+					Severity = NotificationSeverity.Error,
+					Summary = "Password is not same with the confirm password.",
+					Duration = 4000
+				});
+			return;
+		}
+
+		if (password.Length < 6)
+		{
+			GF.ShowNotification(new NotificationMessage
+				{
+					Severity = NotificationSeverity.Error,
+					Summary = "Password must be at least 6 characters wrong.",
+					Duration = 4000
+				});
+			return;
+		}
+		if (!password.Any(char.IsDigit))
+		{
+			GF.ShowNotification(new NotificationMessage
+				{
+					Severity = NotificationSeverity.Error,
+					Summary = "Password must contains at least one digit (eg. 1,2,3,4....).",
+					Duration = 4000
+				});
+			return;
+		}
+		if (!password.Any(char.IsUpper) || !password.Any(char.IsLower))
+		{
+			GF.ShowNotification(new NotificationMessage
+				{
+					Severity = NotificationSeverity.Error,
+					Summary = "Password must contain at least one Upper letter (A,B,C,D) and one lower letter (e,f,g,h).",
+					Duration = 4000
+				});
+			return;
+		}
+		if (!password.Any(ch => !char.IsLetterOrDigit(ch)))
+		{
+			GF.ShowNotification(new NotificationMessage
+				{
+					Severity = NotificationSeverity.Error,
+					Summary = "Password must contain one non-alphabetic character.(!,@,#,$).",
+					Duration = 4000
+				});
+			return;
+		}
+
+		try
+		{
+			await MDPS.updatePassword(selectedUser, password);
+			GF.ShowNotification(new NotificationMessage
+				{
+					Severity = NotificationSeverity.Success,
+					Summary = "The password is reset.",
+					Duration = 4000
+				});
+		}
+		catch (Exception ex)
+		{
+			GF.ShowNotification(new NotificationMessage
+				{
+					Severity = NotificationSeverity.Error,
+					Summary = ex.Message,
+					Duration = 4000
+				});
+		}
+	}
+}

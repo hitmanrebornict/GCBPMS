@@ -1,37 +1,47 @@
-﻿@page "/request-detail/{id:int}"
+﻿@attribute [Authorize(Roles = "Admin, Maintenance Admin, Maintenance User")]
+
+@page "/request-detail/{id:int}"
+
+<title>Request Detail</title>
 
 @inject MaintenanceRequestServices MRS;
 @inject NavigationManager NavigationManager;
 @inject IJSRuntime JS;
 
-<RadzenCard>
+<RadzenCard Class="p-4 shadow-lg">
 
-    <RadzenText TextStyle="TextStyle.DisplayH5">Request Detail</RadzenText>
-    <hr />
-        <div>
-            <RadzenLabel Text="Plate Name:" />
+    <RadzenText TextStyle="TextStyle.DisplayH5" Class="mb-3">Request Detail</RadzenText>
+    <hr class="mb-4" />
+
+    <div class="row g-3">
+        <div class="col-6">
+            <RadzenLabel Text="Plate Name:" Class="fw-bold" />
             <RadzenText Text=@(plateName) />
         </div>
-        <div>
-            <RadzenLabel Text="Request Date:" />
-            <RadzenText Text=@request.RequestDatetime.ToString("dd/MM/yyyy") />
+        <div class="col-6">
+            <RadzenLabel Text="Plate Brand:" Class="fw-bold" />
+            <RadzenText Text=@(plateBrand) />
         </div>
-        <div>
-            <RadzenLabel Text="Repair Reason:" />
-            <RadzenText Text=@request.RepairReason />
+
+        <div class="col-6">
+            <RadzenLabel Text="Repair Reason:" Class="fw-bold" />
+            <RadzenText Text=@request.RepairReason  />
         </div>
-        <div>
-            <RadzenLabel Text="Repair Remark:" />
+        <div class="col-6">
+            <RadzenLabel Text="Repair Remark:" Class="fw-bold" />
             <RadzenText Text=@(request.RepairRemark ?? "N/A") />
         </div>
-        <hr />
+        <div class="col-6">
+            <RadzenLabel Text="Request Date:" Class="fw-bold" />
+            <RadzenText Text=@request.RequestDatetime.ToString("dd/MM/yyyy hh:mm tt") />
+        </div>
+    </div>
+    <hr class="mt-4 mb-4" />
 
-        <h3>Maintenance Part</h3>
-        @* <RadzenLabel Text="Repair Type" />
-        <RadzenDropDown TValue="string" @bind-Value="selectedRepair.RepairType" Data=@repairTypes  /> *@
+    <h3 class="mb-3">Maintenance Part</h3>
 
-    <div class="d-flex justify-content-left">
-        <RadzenSelectBar @bind-Value=@selectedOption TValue="int" class="mb-3">
+    <div class="d-flex justify-content-left mb-4">
+        <RadzenSelectBar @bind-Value=@selectedOption TValue="int" Class="w-50">
             <Items>
                 <RadzenSelectBarItem Text="Supplier" Value="1" />
                 <RadzenSelectBarItem Text="In-house" Value="2" />
@@ -39,30 +49,31 @@
         </RadzenSelectBar>
     </div>
 
-        @if (selectedOption == 1)
-        {
-            <RadzenTemplateForm TItem="SupplierDetail" Data=@selectedSupplier Submit="@(async () => await onSupplierSubmit())">
-            <RadzenLabel Text="Supplier" />
-            <RadzenTextBox Name="SupplierName" @bind-Value="selectedSupplier.SupplierName" />
-            <RadzenRequiredValidator Component="SupplierName" Text="Supplier Name is required" />
+    @if (selectedOption == 1)
+    {
+        <RadzenTemplateForm TItem="SupplierDetail" Data=@selectedSupplier Submit="@(async () => await onSupplierSubmit())" Class="p-3 border rounded shadow-sm">
+            <RadzenLabel Text="Supplier" Class="fw-bold" />
+            <RadzenTextBox Name="SupplierName" @bind-Value="selectedSupplier.SupplierName" Class="form-control mb-2" />
+            <RadzenRequiredValidator Component="SupplierName" Text="Supplier Name is required" Class="text-danger small" />
 
-            <RadzenLabel Text="ETA" />
-            <RadzenDatePicker Name="Eta" @bind-Value="selectedSupplier.Eta" />
-            <RadzenRequiredValidator Component="Eta" Text="ETA is required" />
+            <RadzenLabel Text="ETA" Class="fw-bold" />
+            <RadzenDatePicker Name="Eta" @bind-Value="selectedSupplier.Eta" Class="form-control mb-2" DateFormat="dd/MM/yyyy" />
+            <RadzenRequiredValidator Component="Eta" Text="ETA is required" Class="text-danger small" />
 
-            <RadzenButton Text="Submit" ButtonType="ButtonType.Submit" />
-            </RadzenTemplateForm>
-        }
-        else if(selectedOption == 2)
-        {
-            <RadzenTemplateForm TItem="Repair" Data=@selectedRepair Submit="@(async () => await onTechnicianSubmit())">
-            <RadzenLabel Text="Technician Name" />
-            <RadzenTextBox Name="TechnicianName" @bind-Value="selectedRepair.TechnicianName" />
-            <RadzenRequiredValidator Component="TechnicianName" Text="Technician Name is required" />
-            <RadzenButton Text="Submit" ButtonType="ButtonType.Submit" />
-            </RadzenTemplateForm>
-        }
-   
+            <RadzenButton Text="Submit" ButtonType="ButtonType.Submit" Class="btn btn-primary mt-3" />
+        </RadzenTemplateForm>
+    }
+    else if (selectedOption == 2)
+    {
+        <RadzenTemplateForm TItem="Repair" Data=@selectedRepair Submit="@(async () => await onTechnicianSubmit())" Class="p-3 border rounded shadow-sm">
+            <RadzenLabel Text="Technician Name" Class="fw-bold" />
+            <RadzenTextBox Name="TechnicianName" @bind-Value="selectedRepair.TechnicianName" Class="form-control mb-2" />
+            <RadzenRequiredValidator Component="TechnicianName" Text="Technician Name is required" Class="text-danger small" />
+
+            <RadzenButton Text="Submit" ButtonType="ButtonType.Submit" Class="btn btn-primary mt-3" />
+        </RadzenTemplateForm>
+    }
+
 </RadzenCard>
 
 @code {
@@ -72,7 +83,7 @@
     private Request request = new Request();
     private Repair selectedRepair = new();
     private SupplierDetail selectedSupplier = new();
-    private string plateName;
+    private string plateName, plateBrand;
 
     private int selectedOption = 1;
 
@@ -85,6 +96,7 @@
                 return;
             }
             plateName = request.Plate.PlateName;
+            plateBrand = request.Plate.PlateBrandNavigation.BrandName;
         }
         catch (Exception ex){
             NavigationManager.NavigateTo("/maintenance-request-list");
@@ -94,6 +106,7 @@
     private async Task onSupplierSubmit(){
         try{
             await MRS.insertIntoSupplierRepair(selectedSupplier, request);
+            NavigationManager.NavigateTo("/mt-repair-list");
             NotificationService.Notify(NotificationSeverity.Success, "Repair Request Accepted");
         }
         catch (Exception ex){
@@ -104,6 +117,7 @@
     private async Task onTechnicianSubmit(){
         try{
             await MRS.insertIntoTechnicianRepair(selectedRepair, request);
+            NavigationManager.NavigateTo("/mt-repair-list");
             NotificationService.Notify(NotificationSeverity.Success, "Repair Request Accepted");
         }
         catch (Exception ex){

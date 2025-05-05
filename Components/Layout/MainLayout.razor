@@ -2,6 +2,8 @@
 
 <RadzenComponents @rendermode="InteractiveServer" />
 
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
 <div class="page">
     <div class="sidebar">
         <NavMenu />
@@ -9,20 +11,28 @@
 
     <main style ="background-color:#f4f5f9;">
         <div class="top-row px-4">
-            @* <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a> *@
             <RadzenProfileMenu>
                 <Template>
                     <RadzenGravatar></RadzenGravatar>
                 </Template>
                 <ChildContent>
-                    <RadzenProfileMenuItem Text="Buttons" Path="buttons" Icon="account_circle"></RadzenProfileMenuItem>
-                 </ChildContent>
+                   
+                    <RadzenProfileMenuItem Text="Profile" Path="/profile" Icon="account_circle"></RadzenProfileMenuItem>
+                    <RadzenProfileMenuItem Text="Settings" Path="/ChangePassword" Icon="settings"></RadzenProfileMenuItem>
+                    <RadzenProfileMenuItem Text="Logout" Path="/customizeLogout" Icon="logout">
+
+                    </RadzenProfileMenuItem>
+                </ChildContent>
             </RadzenProfileMenu>
         </div>
 
         <article class="content px-4">
             @Body
         </article>
+
+        <footer class="footer">
+            <p>&copy; 2024-2025 <span class="highligh-text">GCBIT</span> | All Rights Reserved | Developed by  <a href="https://www.linkedin.com/in/yi-cheng-yeong-a428b3290/" target="_blank" class="highligh-text">Yeong Yi Cheng</a></p>
+        </footer>
     </main>
 </div>
 
@@ -31,3 +41,32 @@
     <a href="" class="reload">Reload</a>
     <a class="dismiss">🗙</a>
 </div>
+
+<style>
+    /* Ensure the page container takes up the full viewport height */
+    .page-container {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
+
+    /* Allow the content area to expand to fill available space */
+    .content {
+        flex: 1;
+        padding: 20px; /* Optional: Adds some padding around the content */
+    }
+
+    /* Footer styles */
+    .footer {
+        background-color: #ffffff; /* Example background color */
+        color: #878c95; /* Example text color */
+        padding: 5px 10px;
+        text-align: center;
+    }
+
+    .highligh-text {
+        color: #215bb3;
+        font-weight: bold;
+        text-decoration: none;
+    }
+</style>

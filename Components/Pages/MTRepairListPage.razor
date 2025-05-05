@@ -1,4 +1,8 @@
-﻿@page "/mt-repair-list"
+﻿@attribute [Authorize(Roles = "Admin, Maintenance Admin, Maintenance User")]
+
+@page "/mt-repair-list"
+
+<title>Repair List</title>
 
 @inject MaintenanceRequestServices MRS
 @inject NavigationManager NavigationManager
@@ -6,12 +10,47 @@
 <RadzenCard>
     <RadzenText TextStyle="TextStyle.DisplayH5">Repair List</RadzenText>
     <hr />
-    <RadzenDataGrid Data="@repairList" TItem="Repair" RowDoubleClick="OnRowDoubleClick">
+    <RadzenDataGrid Data="@repairList" TItem="Repair" RowDoubleClick="OnRowDoubleClick" Responsive="true" AllowFiltering="true">
         <Columns>
             <RadzenDataGridColumn Property="Request.Plate.PlateName" Title="Plate Name" />
-            <RadzenDataGridColumn Property="Request.RequestDatetime" Title="Request Date" />
+            <RadzenDataGridColumn Property="Request.Plate.PlateBrandNavigation.BrandName" Title="Plate Brand" />
+            <RadzenDataGridColumn Property="Request.RequestDatetime" Title="Request Date">
+            <Template Context="request">
+                @request.Request.RequestDatetime.ToString("dd/MM/yyyy hh:mm tt")
+            </Template>
+            </RadzenDataGridColumn>
             <RadzenDataGridColumn Property="RepairType" Title="Repair Type" />
             <RadzenDataGridColumn Property="RepairStatus" Title="Repair Status" />
+            <RadzenDataGridColumn TItem="Repair" Property="RepairStatus" Title="Pepair Status">
+                <Template Context="repair">
+                    @if (repair.RepairStatus == "Completed")
+                    {
+                        <RadzenBadge Text="Completed" Style="background-color: #4caf50; color: white;" />
+                    }
+                    else if (repair.RepairStatus == "Cost-Record")
+                    {
+                        <RadzenBadge Text="Cost-Record" Style="background-color: #2196f3; color: white;" />
+                    }
+                    else if (repair.RepairStatus == "Repairing")
+                    {
+                        <RadzenBadge Text="Repairing" Style="background-color: #f44336; color: white;" />
+                    }
+                    else
+                    {
+                        <RadzenBadge Text="Unknown" Style="background-color: gray; color: white;" />
+                    }
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn Property="AcceptedBy" Title="Accepted By" />
+            <RadzenDataGridColumn Property="CompletedBy" Title="Completed By" />
+            <RadzenDataGridColumn TItem="Repair" Title="Actions">
+                <Template Context="repair">
+                    <RadzenButton Text="View" Icon="visibility" ButtonStyle="ButtonStyle.Secondary"
+                                  Click="() => OnRowButtonClick(repair)" />
+                </Template>
+            </RadzenDataGridColumn>
+
+            
         </Columns>
     </RadzenDataGrid>
 </RadzenCard>
@@ -27,6 +66,12 @@
 
     private void OnRowDoubleClick(DataGridRowMouseEventArgs<Repair> args)
     {
-        NavigationManager.NavigateTo($"/mt-fill-result/{args.Data.Id}/{args.Data.Request.Plate.PlateName}");
+        NavigationManager.NavigateTo($"/mt-fill-result/{args.Data.Id}/{args.Data.Request.Plate.PlateName}/{args.Data.Request.Plate.PlateBrandNavigation.BrandName}");
+    }
+
+    void OnRowButtonClick(Repair selectedRepair)
+    {
+        // Navigate to the plate detail page using the plate ID
+        NavigationManager.NavigateTo($"mt-fill-result/{selectedRepair.Id}/{selectedRepair.Request.Plate.PlateName}/{selectedRepair.Request.Plate.PlateBrandNavigation.BrandName}");
     }
 }

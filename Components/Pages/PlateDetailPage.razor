@@ -1,6 +1,8 @@
-﻿@page "/plate-detail/{id:int}"
+﻿@attribute [Authorize]
 
-<h3>PlateDetailPage</h3>
+@page "/plate-detail/{id:int}"
+
+<title>Plate Detail</title>
 
 @inject PlateDetailPageServices PDPS
 
@@ -12,14 +14,16 @@
         <RadzenLabel Text=@($"Plate Name: {plate.PlateName}") Style="font-weight: bold; display: block;" />
         <RadzenLabel Text=@($"Brand Name: {plate.PlateBrandNavigation?.BrandName ?? "N/A"}") Style="font-weight: bold; display: block;" />
         <RadzenLabel Text=@($"Install Date: {plate.PlateInstallDatetime.ToString("dd/MM/yyyy") ?? "N/A"}") Style="font-weight: bold; display: block;" />
-        <RadzenLabel Text=@($"Days Since Installation: {daysUsed} days") Style="font-weight: bold; display: block;" />
+        <RadzenLabel Text=@($"Duration: {daysUsed} days") Style="font-weight: bold; display: block;" />
+        <hr/>
         @if (plate.PlateStatus == "Used")
         {
+            <RadzenLabel Text=@($"Status: {plate.PlateStatus}") Style="font-weight: bold; display: block;" />
             <RadzenLabel Text=@($"Phase Name: {plate.Pots.FirstOrDefault()?.Press?.Phase?.PhaseName ?? "N/A"}") Style="font-weight: bold; display: block;" />
             <RadzenLabel Text=@($"Press Name: {plate.Pots.FirstOrDefault()?.Press?.PressName ?? "N/A"}") Style="font-weight: bold; display: block;" />
             <RadzenLabel Text=@($"Pot Name: {plate.Pots.FirstOrDefault()?.PotName ?? "N/A"}") Style="font-weight: bold; display: block;" />
-            <RadzenLabel Text=@($"Install Date: {plate.Pots.FirstOrDefault()?.InstallDatetime}") Style="font-weight: bold; display: block;" />
-            <RadzenLabel Text=@($"Time Used: {timeUsed} days") Style="font-weight: bold; display: block;" />
+            <RadzenLabel Text=@($"Install Date: {plate.Pots.FirstOrDefault()?.InstallDatetime.Value.ToString("dd/MM/yyyy")}") Style="font-weight: bold; display: block;" />
+            <RadzenLabel Text=@($"Install Duration: {timeUsed} days") Style="font-weight: bold; display: block;" />
         }
         else
         {
@@ -28,14 +32,22 @@
     </div>
 
     <hr />
-
-    <RadzenDataGrid TItem="PlateHistoryUsage" Data=@plateHistoryUsages AllowFiltering="true" AllowSorting="true" FilterMode="FilterMode.Simple">
+    <RadzenText TextStyle="TextStyle.DisplayH6">Plate History Detail</RadzenText>
+    <RadzenDataGrid TItem="PlateHistoryUsage" Data=@plateHistoryUsages AllowFiltering="true" AllowSorting="true" AllowColumnResize="true" FilterMode="FilterMode.Simple" Responsive="true">
         <Columns>
-            <RadzenDataGridColumn TItem="PlateHistoryUsage" Property="InstallDateTime" Title="Install Date" />
-            <RadzenDataGridColumn TItem="PlateHistoryUsage" Property="RemoveDateTime" Title="Remove Date" />
+            <RadzenDataGridColumn TItem="PlateHistoryUsage" Property="InstallDateTime" Title="Install Date" >
+            <Template Context="plate">
+                        @(plate.InstallDateTime.ToString("dd/MM/yyyy hh:mm tt"))
+                    </Template>
+              </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="PlateHistoryUsage" Property="RemoveDateTime" Title="Remove Date" >
+            <Template Context="plate">
+                        @(plate.RemoveDateTime.Value.ToString("dd/MM/yyyy hh:mm tt") ?? "N/A")
+                    </Template>
+            </RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="PlateHistoryUsage" Title="Days Since Installation">
                 <Template Context="data">
-                    @CalculateDaysBetween(data.InstallDateTime, data.RemoveDateTime)
+                    @CalculateDaysBetween(data.InstallDateTime, data.RemoveDateTime) days
                 </Template>
             </RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="PlateHistoryUsage" Title="Press Name" Property="Pots.Press.PressName" >
@@ -52,7 +64,50 @@
     </RadzenDataGrid>
 
     <hr />
-
+    <RadzenText TextStyle="TextStyle.DisplayH6">Plate Repair Detail</RadzenText>
+    <RadzenDataGrid TItem="Repair" Data=@plateRepairHistoryList AllowFiltering="true" AllowSorting="true" FilterMode="FilterMode.Simple" AllowColumnResize="true" Responsive="true">
+        <Columns>
+            <RadzenDataGridColumn TItem="Repair" Property="Request.RequestDatetime" Title="Request Date" >
+            <Template Context="plate">
+                        @(plate.Request.RequestDatetime.ToString("dd/MM/yyyy hh:mm tt"))
+                    </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="Repair" Property="FinishDatetime" Title="Finish Date Time" >
+                <Template Context="plate">
+                    @(plate.FinishDatetime.Value.ToString("dd/MM/yyyy hh:mm tt") ?? "N/A")
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="Repair" Property="FinishDatetime" Title="Repair Duration" >
+            <Template Context="data">
+                    @($"{CalculateDaysBetween(data.Request.RequestDatetime, data.FinishDatetime)} days")
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="Repair" Title="Last Install" >
+                <Template Context="data">
+                    @($"{data.Request?.PlateHistoryUsage?.Pot?.Press?.PressName} {data.Request?.PlateHistoryUsage?.Pot?.PotName ?? "N/A"}")
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="Repair" Property="Request.RepairReason" Title="Condition" />
+            <RadzenDataGridColumn TItem="Repair" Property="RepairType" Title="Repair Type" />
+            <RadzenDataGridColumn TItem="Repair" Title="Repair By">
+                <Template Context="data">
+                    @if (data.RepairType == "In-house")
+                    {
+                        @data.TechnicianName
+                    }
+                    else if (data.RepairType == "Supplier") 
+                    {
+                        @data.SupplierDetails.SupplierName
+                    }
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="Repair" Title="Repair Cost">
+                <Template Context="data">
+                    @($"IDR {data.RepairCosts?.Sum(rc => rc.Cost) ?? 0}")
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
     
 </RadzenCard>
 

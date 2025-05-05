@@ -1,0 +1,575 @@
+﻿@attribute [Authorize(Roles = "Admin, Maintenance Admin, Maintenance User")]
+
+@page "/mt-dashboard"
+
+<title>Dashboard</title>
+
+@inject MaintenanceDashboardServices MDS
+
+<RadzenCard>
+	<RadzenText TextStyle="TextStyle.DisplayH5">Dashboard</RadzenText>
+	<hr />
+
+	@* <RadzenCard>
+		<RadzenDropDown TValue="Press" Data="pressList" @bind-Value="@selectedPress" TextProperty="PressName" 
+		Change="@onPressDropDownChanged"></RadzenDropDown>
+		<RadzenChart>
+			<RadzenPieSeries TItem="seperatePieChartItem" Title="Press" Data="@seperatePieChartData" CategoryProperty="status" ValueProperty="seperateCountNum">
+				<RadzenSeriesDataLabels Visible="true" />
+			</RadzenPieSeries>
+		</RadzenChart>
+	</RadzenCard> *@
+
+
+
+
+	<RadzenCard>
+		<RadzenText TextStyle="TextStyle.DisplayH6">Press Changes Chart</RadzenText>
+		<hr/>
+		<RadzenDatePicker @bind-Value="pressChangesStartDate" Placeholder="Start Date" DateFormat="dd/MM/yyyy"></RadzenDatePicker>
+		<span>-</span>
+		<RadzenDatePicker @bind-Value="pressChangesEndDate" Placeholder="End Date" DateFormat="dd/MM/yyyy"></RadzenDatePicker>
+		<RadzenButton Icon="filter_alt" Text="Filter" Click="@(async () => await filterButtonOnclick())"></RadzenButton>
+
+
+
+		<RadzenChart style="height: 60vh">
+			<RadzenStackedColumnSeries Data="@stackBarRepairBalingData" CategoryProperty="PressName" Title="Repair - Plate Baling" LineType="LineType.Dashed" ValueProperty="CountNum">
+				<RadzenSeriesDataLabels Visible="false" />
+			</RadzenStackedColumnSeries>
+			<RadzenStackedColumnSeries Data="@stackBarRepairCrackData" CategoryProperty="PressName" Title="Repair - Plate Crack" LineType="LineType.Dashed" ValueProperty="CountNum">
+				<RadzenSeriesDataLabels Visible="false" />
+			</RadzenStackedColumnSeries>
+			<RadzenStackedColumnSeries Data="@stackBarRepairRusakData" CategoryProperty="PressName" Title="Repair - Plate Ullir Rusak" LineType="LineType.Dashed" ValueProperty="CountNum">
+				<RadzenSeriesDataLabels Visible="false" />
+			</RadzenStackedColumnSeries>
+			<RadzenStackedColumnSeries Data="@stackBarRepairPatahData" CategoryProperty="PressName" Title="Repair - Kuping Patah" LineType="LineType.Dashed" ValueProperty="CountNum">
+				<RadzenSeriesDataLabels Visible="false" />
+			</RadzenStackedColumnSeries>
+			<RadzenStackedColumnSeries Data="@stackBarRepairOthersData" CategoryProperty="PressName" Title="Repair - Others" LineType="LineType.Dashed" ValueProperty="CountNum">
+				<RadzenSeriesDataLabels Visible="false" />
+			</RadzenStackedColumnSeries>
+			<RadzenStackedColumnSeries Data="@stackBarSwitchData" CategoryProperty="PressName" Title="Switch" ValueProperty="CountNum">
+				<RadzenSeriesDataLabels Visible="false" />
+			</RadzenStackedColumnSeries>
+			@* <RadzenValueAxis Formatter="@FormatAsUSD" Min="0" Max="800000" Step="100000">
+					<RadzenGridLines Visible="true" />
+					<RadzenAxisTitle Text="Revenue in USD" />
+				</RadzenValueAxis> *@
+			<RadzenBarOptions Radius="5" />
+		</RadzenChart>
+	</RadzenCard>
+	<br />
+
+	<RadzenCard>
+		<RadzenChart>
+			<RadzenText TextStyle="TextStyle.DisplayH6">Press Annual Change Chart</RadzenText>
+			<hr/>
+			<RadzenDropDown Data="annualChangeDropDown" @bind-Value="@selectedAnnualChangeOption" Change="@(async () => await annualChangeDropdownOnChange())"></RadzenDropDown>
+
+			<RadzenChartTooltipOptions Shared="false" />
+			<RadzenLineSeries Smooth="true" Data="@curYearCountData" CategoryProperty="Month" Title="@curYearTitle" LineType="LineType.Dashed" ValueProperty="totalCountNum">
+				<RadzenMarkers Visible="true" MarkerType="MarkerType.Square" />
+				<RadzenSeriesDataLabels Visible="false" />
+			</RadzenLineSeries>
+			<RadzenLineSeries Smooth="true" Data="@lastYearCountData" CategoryProperty="Month" Title="@lastYearTitle" LineType="LineType.Dashed" ValueProperty="totalCountNum">
+				<RadzenMarkers Visible="true" MarkerType="MarkerType.Square" />
+				<RadzenSeriesDataLabels Visible="false" />
+			</RadzenLineSeries>
+			<RadzenCategoryAxis Padding="20" />
+
+		</RadzenChart>
+	</RadzenCard>
+</RadzenCard>
+
+@code {
+	private List<PlateHistoryUsage> completeData = new List<PlateHistoryUsage>();
+	private List<Press> pressList = new List<Press>();
+	private List<PlateHistoryUsage> seperateChartListData = new List<PlateHistoryUsage>();
+	private List<seperatePieChartItem> seperatePieChartData = new List<seperatePieChartItem>();
+	private List<totalChartItem> curYearCountData = new List<totalChartItem>();
+	private List<totalChartItem> lastYearCountData = new List<totalChartItem>();
+	private List<stackBarItem> stackBarRepairBalingData = new List<stackBarItem>();
+	private List<stackBarItem> stackBarSwitchData = new List<stackBarItem>();
+	private List<stackBarItem> stackBarRepairCrackData = new List<stackBarItem>();
+	private List<stackBarItem> stackBarRepairRusakData = new List<stackBarItem>();
+	private List<stackBarItem> stackBarRepairPatahData = new List<stackBarItem>();
+	private List<stackBarItem> stackBarRepairOthersData = new List<stackBarItem>();
+	private string curYearTitle, lastYearTitle;
+	private List<string> annualChangeDropDown = new List<string>(){
+		"All",
+		"Phase 1",
+		"Phase 2",
+		"Phase 3"
+	};
+
+	private string selectedAnnualChangeOption = "All";
+
+	private DateTime pressChangesStartDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+	private DateTime pressChangesEndDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.DaysInMonth(DateTime.Now.Year, DateTime.Now.Month));
+	private CountNumbers selectedCountNumbers = new CountNumbers();
+
+	public class CountNumbers
+	{
+		// Current year count numbers
+		public int curJanCountNum { get; set; }
+		public int curFebCountNum { get; set; }
+		public int curMarCountNum { get; set; }
+		public int curAprCountNum { get; set; }
+		public int curMayCountNum { get; set; }
+		public int curJunCountNum { get; set; }
+		public int curJulCountNum { get; set; }
+		public int curAugCountNum { get; set; }
+		public int curSepCountNum { get; set; }
+		public int curOctCountNum { get; set; }
+		public int curNovCountNum { get; set; }
+		public int curDecCountNum { get; set; }
+
+		// Last year count numbers
+		public int lastJanCountNum;
+		public int lastFebCountNum;
+		public int lastMarCountNum;
+		public int lastAprCountNum;
+		public int lastMayCountNum;
+		public int lastJunCountNum;
+		public int lastJulCountNum;
+		public int lastAugCountNum;
+		public int lastSepCountNum;
+		public int lastOctCountNum;
+		public int lastNovCountNum;
+		public int lastDecCountNum;
+	}
+
+	private Press selectedPress = new Press();
+	private int seperateSwitchCount, seperateRepairCount;
+
+	class seperatePieChartItem {
+		public string status { get; set; }
+		public int seperateCountNum { get; set; }
+	}
+
+	class totalChartItem{
+		public string Month { get; set; }
+		public int totalCountNum { get; set; }
+	}
+
+	class stackBarItem{
+		public string PressName { get; set; }
+		public int CountNum { get; set; }
+	}
+
+
+
+	protected override async Task OnInitializedAsync()
+	{
+		curYearTitle = DateTime.Now.Year.ToString();
+		lastYearTitle = (DateTime.Now.Year - 1).ToString();
+		pressList = await MDS.getPressList();
+		completeData = await MDS.getDataForChart();
+		// selectedPress = pressList.First();
+		// (seperateSwitchCount, seperateRepairCount) = getDataforSeperatePress(completeData, selectedPress.Id);
+		// seperatePieChartData = new List<seperatePieChartItem>{
+		// 		new seperatePieChartItem{status = "Switch", seperateCountNum = seperateSwitchCount
+		// 		},
+		// 		new seperatePieChartItem{status = "Repair", seperateCountNum = seperateRepairCount
+		// 		}
+		// };
+
+		selectedCountNumbers = getCurrentYearDataforTotalChartData();
+		curYearCountData = new List<totalChartItem>(){
+			new totalChartItem{
+				Month = "Jan",
+				totalCountNum = selectedCountNumbers.curJanCountNum
+			},
+			new totalChartItem{
+				Month = "Feb",
+				totalCountNum = selectedCountNumbers.curFebCountNum
+			},
+			new totalChartItem{
+				Month = "Mar",
+				totalCountNum = selectedCountNumbers.curMarCountNum
+			},
+			new totalChartItem{
+				Month = "Apr",
+				totalCountNum = selectedCountNumbers.curAprCountNum
+			},
+			new totalChartItem{
+				Month = "May",
+				totalCountNum = selectedCountNumbers.curMayCountNum
+			},
+			new totalChartItem{
+				Month = "Jun",
+				totalCountNum = selectedCountNumbers.curJunCountNum
+			},
+			new totalChartItem{
+				Month = "Jul",
+				totalCountNum = selectedCountNumbers.curJulCountNum
+			},
+			new totalChartItem{
+				Month = "Aug",
+				totalCountNum = selectedCountNumbers.curAugCountNum
+			},
+			new totalChartItem{
+				Month = "Sept",
+				totalCountNum = selectedCountNumbers.curSepCountNum
+			},
+			new totalChartItem{
+				Month = "Oct",
+				totalCountNum = selectedCountNumbers.curOctCountNum
+			},
+			new totalChartItem{
+				Month = "Nov",
+				totalCountNum = selectedCountNumbers.curNovCountNum
+			},
+			new totalChartItem{
+				Month = "Dec",
+				totalCountNum = selectedCountNumbers.curDecCountNum
+			},
+		};
+
+		lastYearCountData = new List<totalChartItem>(){
+			new totalChartItem{
+				Month = "Jan",
+				totalCountNum = selectedCountNumbers.lastJanCountNum
+			},
+			new totalChartItem{
+				Month = "Feb",
+				totalCountNum = selectedCountNumbers.lastFebCountNum
+			},
+			new totalChartItem{
+				Month = "Mar",
+				totalCountNum = selectedCountNumbers.lastMarCountNum
+			},
+			new totalChartItem{
+				Month = "Apr",
+				totalCountNum = selectedCountNumbers.lastAprCountNum
+			},
+			new totalChartItem{
+				Month = "May",
+				totalCountNum = selectedCountNumbers.lastMayCountNum
+			},
+			new totalChartItem{
+				Month = "Jun",
+				totalCountNum = selectedCountNumbers.lastJunCountNum
+			},
+			new totalChartItem{
+				Month = "Jul",
+				totalCountNum = selectedCountNumbers.lastJulCountNum
+			},
+			new totalChartItem{
+				Month = "Aug",
+				totalCountNum = selectedCountNumbers.lastAugCountNum
+			},
+			new totalChartItem{
+				Month = "Sept",
+				totalCountNum = selectedCountNumbers.lastSepCountNum
+			},
+			new totalChartItem{
+				Month = "Oct",
+				totalCountNum = selectedCountNumbers.lastOctCountNum
+			},
+			new totalChartItem{
+				Month = "Nov",
+				totalCountNum = selectedCountNumbers.lastNovCountNum
+			},
+			new totalChartItem{
+				Month = "Dec",
+				totalCountNum = selectedCountNumbers.lastDecCountNum
+			},
+		};
+
+		stackBarRepairBalingData = getStackBarRepairItem("Plate Baling");
+		stackBarRepairCrackData = getStackBarRepairItem("Plate Crack");
+		stackBarRepairRusakData = getStackBarRepairItem("Plate Ullir Rusak");
+		stackBarRepairPatahData = getStackBarRepairItem("Plate Kuping Patah");
+		stackBarRepairOthersData = getStackBarRepairItem("Others");
+		stackBarSwitchData = getStackBarSwitchItem();
+
+		await base.OnInitializedAsync();
+	}
+
+	// private (int, int) getDataforSeperatePress(List<PlateHistoryUsage> seperateChartListData, int pressID){
+	// 	var switchCount = seperateChartListData.Count(cd => cd.ChangeReason == "Switch" && cd.RemoveDateTime.Value.Month == DateTime.Now.Month && cd.Pot.Press.Id == pressID);
+	// 	var repairCount = seperateChartListData.Count(cd => cd.ChangeReason != "Switch" && cd.RemoveDateTime.Value.Month == DateTime.Now.Month && cd.Pot.Press.Id == pressID);
+	// 	return (switchCount, repairCount);
+	// }
+
+	// private async void onPressDropDownChanged(){
+	// 	seperateChartListData = completeData.Where(cd => cd.Pot.Press.Id == selectedPress.Id).ToList();
+	// 	(seperateSwitchCount, seperateRepairCount) = getDataforSeperatePress(seperateChartListData, selectedPress.Id);
+	// 	seperatePieChartData = new List<seperatePieChartItem>{
+	// 			new seperatePieChartItem{status = "Switch", seperateCountNum = seperateSwitchCount
+	// 			},
+	// 			new seperatePieChartItem{status = "Repair", seperateCountNum = seperateRepairCount
+	// 			}
+	// 	};
+
+	// 	await InvokeAsync(StateHasChanged);
+	// }
+
+	private CountNumbers getCurrentYearDataforTotalChartData(){
+		selectedCountNumbers.curJanCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 1 && cd.RemoveDateTime.Value.Year == DateTime.Now.Year);
+		selectedCountNumbers.curFebCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 2 && cd.RemoveDateTime.Value.Year == DateTime.Now.Year);
+		selectedCountNumbers.curMarCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 3 && cd.RemoveDateTime.Value.Year == DateTime.Now.Year);
+		selectedCountNumbers.curAprCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 4 && cd.RemoveDateTime.Value.Year == DateTime.Now.Year);
+		selectedCountNumbers.curMayCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 5 && cd.RemoveDateTime.Value.Year == DateTime.Now.Year);
+		selectedCountNumbers.curJunCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 6 && cd.RemoveDateTime.Value.Year == DateTime.Now.Year);
+		selectedCountNumbers.curJulCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 7 && cd.RemoveDateTime.Value.Year == DateTime.Now.Year);
+		selectedCountNumbers.curAugCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 8 && cd.RemoveDateTime.Value.Year == DateTime.Now.Year);
+		selectedCountNumbers.curSepCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 9 && cd.RemoveDateTime.Value.Year == DateTime.Now.Year);
+		selectedCountNumbers.curOctCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 10 && cd.RemoveDateTime.Value.Year == DateTime.Now.Year);
+		selectedCountNumbers.curNovCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 11 && cd.RemoveDateTime.Value.Year == DateTime.Now.Year);
+		selectedCountNumbers.curDecCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 12 && cd.RemoveDateTime.Value.Year == DateTime.Now.Year);
+
+		selectedCountNumbers.lastJanCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 1 && cd.RemoveDateTime.Value.Year == (DateTime.Now.Year - 1));
+		selectedCountNumbers.lastFebCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 2 && cd.RemoveDateTime.Value.Year == (DateTime.Now.Year - 1));
+		selectedCountNumbers.lastMarCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 3 && cd.RemoveDateTime.Value.Year == (DateTime.Now.Year - 1));
+		selectedCountNumbers.lastAprCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 4 && cd.RemoveDateTime.Value.Year == (DateTime.Now.Year - 1));
+		selectedCountNumbers.lastMayCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 5 && cd.RemoveDateTime.Value.Year == (DateTime.Now.Year - 1));
+		selectedCountNumbers.lastJunCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 6 && cd.RemoveDateTime.Value.Year == (DateTime.Now.Year - 1));
+		selectedCountNumbers.lastJulCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 7 && cd.RemoveDateTime.Value.Year == (DateTime.Now.Year - 1));
+		selectedCountNumbers.lastAugCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 8 && cd.RemoveDateTime.Value.Year == (DateTime.Now.Year - 1));
+		selectedCountNumbers.lastSepCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 9 && cd.RemoveDateTime.Value.Year == (DateTime.Now.Year - 1));
+		selectedCountNumbers.lastOctCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 10 && cd.RemoveDateTime.Value.Year == (DateTime.Now.Year - 1));
+		selectedCountNumbers.lastNovCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 11 && cd.RemoveDateTime.Value.Year == (DateTime.Now.Year - 1));
+		selectedCountNumbers.lastDecCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 12 && cd.RemoveDateTime.Value.Year == (DateTime.Now.Year - 1));
+
+		return selectedCountNumbers;
+	}
+
+	private CountNumbers getCurrentYearDataforTotalChartDataWithPhaseFilter(List<PlateHistoryUsage> completeData)
+	{
+		selectedCountNumbers.curJanCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 1 && cd.RemoveDateTime.Value.Year == DateTime.Now.Year);
+		selectedCountNumbers.curFebCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 2 && cd.RemoveDateTime.Value.Year == DateTime.Now.Year);
+		selectedCountNumbers.curMarCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 3 && cd.RemoveDateTime.Value.Year == DateTime.Now.Year);
+		selectedCountNumbers.curAprCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 4 && cd.RemoveDateTime.Value.Year == DateTime.Now.Year);
+		selectedCountNumbers.curMayCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 5 && cd.RemoveDateTime.Value.Year == DateTime.Now.Year);
+		selectedCountNumbers.curJunCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 6 && cd.RemoveDateTime.Value.Year == DateTime.Now.Year);
+		selectedCountNumbers.curJulCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 7 && cd.RemoveDateTime.Value.Year == DateTime.Now.Year);
+		selectedCountNumbers.curAugCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 8 && cd.RemoveDateTime.Value.Year == DateTime.Now.Year);
+		selectedCountNumbers.curSepCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 9 && cd.RemoveDateTime.Value.Year == DateTime.Now.Year);
+		selectedCountNumbers.curOctCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 10 && cd.RemoveDateTime.Value.Year == DateTime.Now.Year);
+		selectedCountNumbers.curNovCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 11 && cd.RemoveDateTime.Value.Year == DateTime.Now.Year);
+		selectedCountNumbers.curDecCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 12 && cd.RemoveDateTime.Value.Year == DateTime.Now.Year);
+
+		selectedCountNumbers.lastJanCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 1 && cd.RemoveDateTime.Value.Year == (DateTime.Now.Year - 1));
+		selectedCountNumbers.lastFebCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 2 && cd.RemoveDateTime.Value.Year == (DateTime.Now.Year - 1));
+		selectedCountNumbers.lastMarCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 3 && cd.RemoveDateTime.Value.Year == (DateTime.Now.Year - 1));
+		selectedCountNumbers.lastAprCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 4 && cd.RemoveDateTime.Value.Year == (DateTime.Now.Year - 1));
+		selectedCountNumbers.lastMayCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 5 && cd.RemoveDateTime.Value.Year == (DateTime.Now.Year - 1));
+		selectedCountNumbers.lastJunCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 6 && cd.RemoveDateTime.Value.Year == (DateTime.Now.Year - 1));
+		selectedCountNumbers.lastJulCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 7 && cd.RemoveDateTime.Value.Year == (DateTime.Now.Year - 1));
+		selectedCountNumbers.lastAugCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 8 && cd.RemoveDateTime.Value.Year == (DateTime.Now.Year - 1));
+		selectedCountNumbers.lastSepCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 9 && cd.RemoveDateTime.Value.Year == (DateTime.Now.Year - 1));
+		selectedCountNumbers.lastOctCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 10 && cd.RemoveDateTime.Value.Year == (DateTime.Now.Year - 1));
+		selectedCountNumbers.lastNovCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 11 && cd.RemoveDateTime.Value.Year == (DateTime.Now.Year - 1));
+		selectedCountNumbers.lastDecCountNum = completeData.Count(cd => cd.RemoveDateTime.Value.Month == 12 && cd.RemoveDateTime.Value.Year == (DateTime.Now.Year - 1));
+
+		return selectedCountNumbers;
+	}
+
+	private List<stackBarItem> getStackBarSwitchItem(){
+		var stackBarSwtichItemList = new List<stackBarItem>();
+		foreach(var press in pressList){
+			var pressName = press.PressName;
+			var switchCount = completeData.Count(cd => cd.ChangeReason == "Switch" && cd.RemoveDateTime.Value.Month == DateTime.Now.Month && cd.Pot.Press.Id == press.Id);
+
+			stackBarSwtichItemList.Add(new stackBarItem
+			{
+				PressName = pressName,
+				CountNum = switchCount,
+			}
+			);
+		}
+
+		return stackBarSwtichItemList;
+	}
+
+	private List<stackBarItem> getStackBarRepairItem(string ChangeReason)
+	{
+		var stackBarRepairItemList = new List<stackBarItem>();
+		foreach (var press in pressList)
+		{
+			var pressName = press.PressName;
+			var repairCount = completeData.Count(cd => cd.ChangeReason == ("Repair - " + ChangeReason) && cd.RemoveDateTime.Value.Month == DateTime.Now.Month && cd.Pot.Press.Id == press.Id);
+
+			stackBarRepairItemList.Add(new stackBarItem
+				{
+					PressName = pressName,
+					CountNum = repairCount,
+				}
+			);
+		}
+
+		return stackBarRepairItemList;
+	}
+
+	private List<stackBarItem> getStackBarRepairItemWithDateFilter(string ChangeReason, DateTime filterStartDatetime, DateTime filterEndDatetime)
+	{
+		var stackBarRepairItemList = new List<stackBarItem>();
+		foreach (var press in pressList)
+		{
+			var pressName = press.PressName;
+			var repairCount = completeData.Count(cd => cd.ChangeReason == ("Repair - " + ChangeReason) && cd.RemoveDateTime.Value >= filterStartDatetime && cd.RemoveDateTime.Value <= filterEndDatetime && cd.Pot.Press.Id == press.Id);
+
+			stackBarRepairItemList.Add(new stackBarItem
+				{
+					PressName = pressName,
+					CountNum = repairCount,
+				}
+			);
+		}
+
+		return stackBarRepairItemList;
+	}
+
+	private List<stackBarItem> getStackBarSwitchItemWithDateFilter(DateTime filterStartDatetime, DateTime filterEndDatetime)
+	{
+		var stackBarSwtichItemList = new List<stackBarItem>();
+		foreach(var press in pressList){
+			var pressName = press.PressName;
+			var switchCount = completeData.Count(cd => cd.ChangeReason == "Switch" && cd.RemoveDateTime.Value.Day >= filterStartDatetime.Day && cd.RemoveDateTime.Value.Day <= filterEndDatetime.Day && cd.Pot.Press.Id == press.Id);
+
+			stackBarSwtichItemList.Add(new stackBarItem
+			{
+				PressName = pressName,
+				CountNum = switchCount,
+			}
+			);
+		}
+
+		return stackBarSwtichItemList;
+	}
+
+	private async Task filterButtonOnclick(){
+		stackBarRepairBalingData = getStackBarRepairItemWithDateFilter("Plate Baling", pressChangesStartDate, pressChangesEndDate);
+		stackBarRepairCrackData = getStackBarRepairItemWithDateFilter("Plate Crack", pressChangesStartDate, pressChangesEndDate);
+		stackBarRepairRusakData = getStackBarRepairItemWithDateFilter("Plate Ullir Rusak", pressChangesStartDate, pressChangesEndDate);
+		stackBarRepairPatahData = getStackBarRepairItemWithDateFilter("Plate Kuping Patah", pressChangesStartDate, pressChangesEndDate);
+		stackBarRepairOthersData = getStackBarRepairItemWithDateFilter("Others", pressChangesStartDate, pressChangesEndDate);
+		stackBarSwitchData = getStackBarSwitchItemWithDateFilter(pressChangesStartDate, pressChangesEndDate);
+
+		await InvokeAsync(StateHasChanged);
+	}
+
+	private async Task annualChangeDropdownOnChange(){
+		if(selectedAnnualChangeOption == "All"){
+			selectedCountNumbers = getCurrentYearDataforTotalChartDataWithPhaseFilter(completeData);
+		}
+		else if(selectedAnnualChangeOption == "Phase 1"){
+			var filteredList = completeData.Where(c => c.Pot.Press.Phase.PhaseName == "Phase 1").ToList();
+			selectedCountNumbers = getCurrentYearDataforTotalChartDataWithPhaseFilter(filteredList);
+		}
+		else if(selectedAnnualChangeOption == "Phase 2"){
+			var filteredList = completeData.Where(c => c.Pot.Press.Phase.PhaseName == "Phase 2").ToList();
+			selectedCountNumbers = getCurrentYearDataforTotalChartDataWithPhaseFilter(filteredList);
+		}
+		else if(selectedAnnualChangeOption == "Phase 3"){
+			var filteredList = completeData.Where(c => c.Pot.Press.Phase.PhaseName == "Phase 3").ToList();
+			selectedCountNumbers = getCurrentYearDataforTotalChartDataWithPhaseFilter(filteredList);
+		}
+
+		curYearCountData = new List<totalChartItem>(){
+			new totalChartItem{
+				Month = "Jan",
+				totalCountNum = selectedCountNumbers.curJanCountNum
+			},
+			new totalChartItem{
+				Month = "Feb",
+				totalCountNum = selectedCountNumbers.curFebCountNum
+			},
+			new totalChartItem{
+				Month = "Mar",
+				totalCountNum = selectedCountNumbers.curMarCountNum
+			},
+			new totalChartItem{
+				Month = "Apr",
+				totalCountNum = selectedCountNumbers.curAprCountNum
+			},
+			new totalChartItem{
+				Month = "May",
+				totalCountNum = selectedCountNumbers.curMayCountNum
+			},
+			new totalChartItem{
+				Month = "Jun",
+				totalCountNum = selectedCountNumbers.curJunCountNum
+			},
+			new totalChartItem{
+				Month = "Jul",
+				totalCountNum = selectedCountNumbers.curJulCountNum
+			},
+			new totalChartItem{
+				Month = "Aug",
+				totalCountNum = selectedCountNumbers.curAugCountNum
+			},
+			new totalChartItem{
+				Month = "Sept",
+				totalCountNum = selectedCountNumbers.curSepCountNum
+			},
+			new totalChartItem{
+				Month = "Oct",
+				totalCountNum = selectedCountNumbers.curOctCountNum
+			},
+			new totalChartItem{
+				Month = "Nov",
+				totalCountNum = selectedCountNumbers.curNovCountNum
+			},
+			new totalChartItem{
+				Month = "Dec",
+				totalCountNum = selectedCountNumbers.curDecCountNum
+			},
+		};
+
+		lastYearCountData = new List<totalChartItem>(){
+			new totalChartItem{
+				Month = "Jan",
+				totalCountNum = selectedCountNumbers.lastJanCountNum
+			},
+			new totalChartItem{
+				Month = "Feb",
+				totalCountNum = selectedCountNumbers.lastFebCountNum
+			},
+			new totalChartItem{
+				Month = "Mar",
+				totalCountNum = selectedCountNumbers.lastMarCountNum
+			},
+			new totalChartItem{
+				Month = "Apr",
+				totalCountNum = selectedCountNumbers.lastAprCountNum
+			},
+			new totalChartItem{
+				Month = "May",
+				totalCountNum = selectedCountNumbers.lastMayCountNum
+			},
+			new totalChartItem{
+				Month = "Jun",
+				totalCountNum = selectedCountNumbers.lastJunCountNum
+			},
+			new totalChartItem{
+				Month = "Jul",
+				totalCountNum = selectedCountNumbers.lastJulCountNum
+			},
+			new totalChartItem{
+				Month = "Aug",
+				totalCountNum = selectedCountNumbers.lastAugCountNum
+			},
+			new totalChartItem{
+				Month = "Sept",
+				totalCountNum = selectedCountNumbers.lastSepCountNum
+			},
+			new totalChartItem{
+				Month = "Oct",
+				totalCountNum = selectedCountNumbers.lastOctCountNum
+			},
+			new totalChartItem{
+				Month = "Nov",
+				totalCountNum = selectedCountNumbers.lastNovCountNum
+			},
+			new totalChartItem{
+				Month = "Dec",
+				totalCountNum = selectedCountNumbers.lastDecCountNum
+			},
+		};
+		await InvokeAsync(StateHasChanged);
+	}
+}

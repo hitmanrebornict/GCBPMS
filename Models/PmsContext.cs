@@ -15,6 +15,8 @@ public partial class PmsContext : DbContext
     {
     }
 
+    public virtual DbSet<ActionCodeDetail> ActionCodeDetails { get; set; }
+
     public virtual DbSet<AspNetRole> AspNetRoles { get; set; }
 
     public virtual DbSet<AspNetRoleClaim> AspNetRoleClaims { get; set; }
@@ -47,8 +49,18 @@ public partial class PmsContext : DbContext
 
     public virtual DbSet<SupplierDetail> SupplierDetails { get; set; }
 
+    public virtual DbSet<UserAction> UserActions { get; set; }
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<ActionCodeDetail>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__ActionCo__3214EC2768D71FFB");
+
+            entity.Property(e => e.Id).HasColumnName("ID");
+            entity.Property(e => e.FullCode).HasMaxLength(50);
+        });
+
         modelBuilder.Entity<AspNetRole>(entity =>
         {
             entity.HasIndex(e => e.NormalizedName, "RoleNameIndex")
@@ -69,6 +81,8 @@ public partial class PmsContext : DbContext
         modelBuilder.Entity<AspNetUser>(entity =>
         {
             entity.HasIndex(e => e.NormalizedEmail, "EmailIndex");
+
+            entity.HasIndex(e => e.UserName, "UQ_AspNetUsers_UserName").IsUnique();
 
             entity.HasIndex(e => e.NormalizedUserName, "UserNameIndex")
                 .IsUnique()
@@ -158,6 +172,9 @@ public partial class PmsContext : DbContext
 
             entity.ToTable("PlateHistoryUsage");
 
+            entity.Property(e => e.ChangeReason)
+                .HasMaxLength(255)
+                .IsUnicode(false);
             entity.Property(e => e.InstallDateTime).HasColumnType("datetime");
             entity.Property(e => e.RemoveDateTime).HasColumnType("datetime");
 
@@ -201,6 +218,8 @@ public partial class PmsContext : DbContext
         {
             entity.HasKey(e => e.Id).HasName("PK__Repairs__3214EC07B34002B8");
 
+            entity.Property(e => e.AcceptedBy).HasMaxLength(256);
+            entity.Property(e => e.CompletedBy).HasMaxLength(256);
             entity.Property(e => e.FinishDatetime).HasColumnType("datetime");
             entity.Property(e => e.RepairRemark).HasMaxLength(255);
             entity.Property(e => e.RepairStatus).HasMaxLength(50);
@@ -246,6 +265,7 @@ public partial class PmsContext : DbContext
                 .HasMaxLength(50)
                 .IsUnicode(false)
                 .HasDefaultValue("Requested");
+            entity.Property(e => e.Requestor).HasMaxLength(256);
 
             entity.HasOne(d => d.PlateHistoryUsage).WithMany(p => p.Requests)
                 .HasForeignKey(d => d.PlateHistoryUsageId)
@@ -255,6 +275,12 @@ public partial class PmsContext : DbContext
                 .HasForeignKey(d => d.PlateId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Request_Plate");
+
+            entity.HasOne(d => d.RequestorNavigation).WithMany(p => p.Requests)
+                .HasPrincipalKey(p => p.UserName)
+                .HasForeignKey(d => d.Requestor)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Requests_AspNetUsers");
         });
 
         modelBuilder.Entity<SupplierDetail>(entity =>
@@ -265,6 +291,30 @@ public partial class PmsContext : DbContext
                 .HasColumnType("datetime")
                 .HasColumnName("ETA");
             entity.Property(e => e.SupplierName).HasMaxLength(100);
+        });
+
+        modelBuilder.Entity<UserAction>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__UserActi__3214EC273FB4B6C6");
+
+            entity.Property(e => e.Id).HasColumnName("ID");
+            entity.Property(e => e.ActionDatetime).HasColumnType("datetime");
+            entity.Property(e => e.Username).HasMaxLength(256);
+
+            entity.HasOne(d => d.ActionNavigation).WithMany(p => p.UserActions)
+                .HasForeignKey(d => d.Action)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__UserActio__Actio__1AD3FDA4");
+
+            entity.HasOne(d => d.Plate).WithMany(p => p.UserActions)
+                .HasForeignKey(d => d.PlateId)
+                .HasConstraintName("FK__UserActio__Plate__17036CC0");
+
+            entity.HasOne(d => d.UsernameNavigation).WithMany(p => p.UserActions)
+                .HasPrincipalKey(p => p.UserName)
+                .HasForeignKey(d => d.Username)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_UserActions_AspNetUsers");
         });
 
         OnModelCreatingPartial(modelBuilder);

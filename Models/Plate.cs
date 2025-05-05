@@ -28,4 +28,6 @@ public partial class Plate
     public virtual ICollection<Pot> Pots { get; set; } = new List<Pot>();
 
     public virtual ICollection<Request> Requests { get; set; } = new List<Request>();
+
+    public virtual ICollection<UserAction> UserActions { get; set; } = new List<UserAction>();
 }

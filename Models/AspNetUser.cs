@@ -7,7 +7,7 @@ public partial class AspNetUser
 {
     public string Id { get; set; } = null!;
 
-    public string? UserName { get; set; }
+    public string UserName { get; set; } = null!;
 
     public string? NormalizedUserName { get; set; }
 
@@ -35,11 +35,17 @@ public partial class AspNetUser
 
     public int AccessFailedCount { get; set; }
 
+    public bool? Active { get; set; }
+
     public virtual ICollection<AspNetUserClaim> AspNetUserClaims { get; set; } = new List<AspNetUserClaim>();
 
     public virtual ICollection<AspNetUserLogin> AspNetUserLogins { get; set; } = new List<AspNetUserLogin>();
 
     public virtual ICollection<AspNetUserToken> AspNetUserTokens { get; set; } = new List<AspNetUserToken>();
+
+    public virtual ICollection<Request> Requests { get; set; } = new List<Request>();
+
+    public virtual ICollection<UserAction> UserActions { get; set; } = new List<UserAction>();
 
     public virtual ICollection<AspNetRole> Roles { get; set; } = new List<AspNetRole>();
 }
